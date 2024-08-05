@@ -32,7 +32,8 @@ namespace RealisticParking
 
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
-            updateSystem.UpdateAfter<RealisticParkingSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAfter<ParkingRerouteSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAfter<FreeParkingSystem>(SystemUpdatePhase.ModificationEnd);
         }
 
         public void OnDispose()

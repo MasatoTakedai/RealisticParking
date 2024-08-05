@@ -2,6 +2,7 @@
 using Game;
 using Game.Buildings;
 using Game.Common;
+using Game.Net;
 using Game.Pathfind;
 using Game.Simulation;
 using Game.Tools;
@@ -11,7 +12,7 @@ using Unity.Entities;
 
 namespace RealisticParking
 {
-    public partial class RealisticParkingSystem : GameSystemBase
+    public partial class ParkingRerouteSystem : GameSystemBase
     {
         private SimulationSystem simulationSystem;
         private EntityQuery personalCarQuery;
@@ -71,7 +72,6 @@ namespace RealisticParking
             }
 
             NativeArray<Entity> carEntities = this.personalCarQuery.ToEntityArray(Allocator.Temp);
-
             for (int i = 0; i < carEntities.Length; i++)
             {
                 Entity entity = carEntities[i];
