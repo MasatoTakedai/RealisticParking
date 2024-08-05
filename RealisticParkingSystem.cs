@@ -71,7 +71,6 @@ namespace RealisticParking
             }
 
             NativeArray<Entity> carEntities = this.personalCarQuery.ToEntityArray(Allocator.Temp);
-            NativeArray<PathOwner> pathComponents = this.personalCarQuery.ToComponentDataArray<PathOwner>(Allocator.Temp);
 
             for (int i = 0; i < carEntities.Length; i++)
             {
@@ -97,8 +96,8 @@ namespace RealisticParking
                     if (hideObsolete)
                     {
                         pathOwner.m_State &= ~PathFlags.Obsolete;
+                        EntityManager.SetComponentData(entity, pathOwner);
                     }
-                    EntityManager.SetComponentData(entity, pathOwner);
                 }
             }
         }
