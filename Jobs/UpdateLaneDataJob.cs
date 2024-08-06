@@ -1,4 +1,4 @@
-﻿/* lines edited: 224 */
+﻿/* copied from ParkingLaneDataSystem with some custom modifications */
 
 using Colossal.Mathematics;
 using Colossal.Collections;
@@ -22,31 +22,28 @@ namespace RealisticParking
     [BurstCompile]
     public struct UpdateLaneDataJob : IJobChunk
     {
-        private struct CountVehiclesIterator : INativeQuadTreeIterator<Entity, QuadTreeBoundsXZ>, IUnsafeQuadTreeIterator<Entity, QuadTreeBoundsXZ>
+        // custom code start
+        public int garageSpotsMultiplier;
+        public BufferLookup<QueuedVehicle> queuedVehicleLookup;
+
+        private float CalculateCustomFreeSpace(Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
-            public Entity m_Lane;
+            float vanillaValue = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+            return vanillaValue;
+        }
 
-            public Bounds3 m_Bounds;
+        private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
 
-            public int m_Result;
-
-            public ComponentLookup<ParkedCar> m_ParkedCarData;
-
-            public bool Intersect(QuadTreeBoundsXZ bounds)
-            {
-                return MathUtils.Intersect(bounds.m_Bounds, m_Bounds);
-            }
-
-            public void Iterate(QuadTreeBoundsXZ bounds, Entity entity)
-            {
-                if (MathUtils.Intersect(bounds.m_Bounds, m_Bounds) && m_ParkedCarData.TryGetComponent(entity, out var componentData) && componentData.m_Lane == m_Lane)
+        private void ProcessQueuedVehicles(Entity entity)
+        {
+            if (queuedVehicleLookup.TryGetBuffer(entity, out DynamicBuffer<QueuedVehicle> queue)) {
+                for (int i = 0; i < queue.Length; i++)
                 {
-                    m_Result++;
                 }
             }
         }
+        // custom code end
 
-        public int garageSpotsMultiplier;
 
         [ReadOnly]
         public EntityTypeHandle m_EntityType;
@@ -166,6 +163,7 @@ namespace RealisticParking
             NativeArray<Curve> nativeArray = chunk.GetNativeArray(ref m_CurveType);
             NativeArray<Owner> nativeArray2 = chunk.GetNativeArray(ref m_OwnerType);
             NativeArray<Game.Net.ParkingLane> nativeArray3 = chunk.GetNativeArray(ref m_ParkingLaneType);
+            NativeArray<Entity> nativeArray6 = chunk.GetNativeArray(m_EntityType);
             if (nativeArray3.Length != 0)
             {
                 NativeArray<Lane> nativeArray4 = chunk.GetNativeArray(ref m_LaneType);
@@ -192,7 +190,8 @@ namespace RealisticParking
                     Bounds1 blockedRange = GetBlockedRange(owner, laneData);
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
-                    parkingLane.m_FreeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+                    ProcessQueuedVehicles(nativeArray6[i]);
+                    parkingLane.m_FreeSpace = CalculateCustomFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
                     GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
                     if (disabled)
@@ -211,7 +210,6 @@ namespace RealisticParking
                 }
                 return;
             }
-            NativeArray<Entity> nativeArray6 = chunk.GetNativeArray(m_EntityType);
             NativeArray<GarageLane> nativeArray7 = chunk.GetNativeArray(ref m_GarageLaneType);
             NativeArray<Game.Net.ConnectionLane> nativeArray8 = chunk.GetNativeArray(ref m_ConnectionLaneType);
             for (int j = 0; j < nativeArray7.Length; j++)
@@ -336,7 +334,7 @@ namespace RealisticParking
                     WorkplaceData componentData8;
                     if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef.m_Prefab, out var componentData7))
                     {
-                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, Mathf.RoundToInt(componentData7.m_SpaceMultiplier) * garageSpotsMultiplier);
+                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(Mathf.RoundToInt(componentData7.m_SpaceMultiplier)));
                     }
                     else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef.m_Prefab, out componentData8))
                     {
@@ -608,6 +606,31 @@ namespace RealisticParking
             }
             x2 = math.max(x2, num11);
             return math.select(x2, math.min(x2, parkingLaneData.m_MaxCarLength), parkingLaneData.m_MaxCarLength != 0f);
+        }
+
+
+        private struct CountVehiclesIterator : INativeQuadTreeIterator<Entity, QuadTreeBoundsXZ>, IUnsafeQuadTreeIterator<Entity, QuadTreeBoundsXZ>
+        {
+            public Entity m_Lane;
+
+            public Bounds3 m_Bounds;
+
+            public int m_Result;
+
+            public ComponentLookup<ParkedCar> m_ParkedCarData;
+
+            public bool Intersect(QuadTreeBoundsXZ bounds)
+            {
+                return MathUtils.Intersect(bounds.m_Bounds, m_Bounds);
+            }
+
+            public void Iterate(QuadTreeBoundsXZ bounds, Entity entity)
+            {
+                if (MathUtils.Intersect(bounds.m_Bounds, m_Bounds) && m_ParkedCarData.TryGetComponent(entity, out var componentData) && componentData.m_Lane == m_Lane)
+                {
+                    m_Result++;
+                }
+            }
         }
     }
 }

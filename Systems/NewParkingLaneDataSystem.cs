@@ -128,6 +128,7 @@ namespace RealisticParking
             updateLaneJob.m_City = m_CitySystem.City;
             updateLaneJob.m_MovingObjectSearchTree = m_ObjectSearchSystem.GetMovingSearchTree(readOnly: true, out var dependencies);
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
+            updateLaneJob.queuedVehicleLookup = SystemAPI.GetBufferLookup<QueuedVehicle>(isReadOnly: false);
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
             base.Dependency = jobHandle;
