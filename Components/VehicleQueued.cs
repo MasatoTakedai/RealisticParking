@@ -2,7 +2,7 @@
 
 namespace RealisticParking
 {
-    internal class VehicleQueued : IComponentData, IQueryTypeParameter
+    public struct VehicleQueued : IComponentData, IQueryTypeParameter
     {
     }
 }
