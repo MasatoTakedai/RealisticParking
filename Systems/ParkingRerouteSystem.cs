@@ -31,7 +31,6 @@ namespace RealisticParking
                     this.UpdateSettings((Setting)settings);
                 }
             };
-
             this.UpdateSettings(Mod.INSTANCE.settings);
 
             this.personalCarQuery = GetEntityQuery(new EntityQueryDesc
@@ -76,22 +75,36 @@ namespace RealisticParking
             NativeArray<Entity> carEntities = this.personalCarQuery.ToEntityArray(Allocator.Temp);
             for (int i = 0; i < carEntities.Length; i++)
             {
-                Entity entity = carEntities[i];
-                if (EntityManager.TryGetComponent(entity, out PathOwner pathOwner) && EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<PathElement> path))
+                Entity carEntity = carEntities[i];
+                if (EntityManager.TryGetComponent(carEntity, out PathOwner pathOwner)
+                    && EntityManager.TryGetBuffer(carEntity, true, out DynamicBuffer<PathElement> path))
                 {
                     if ((pathOwner.m_State & PathFlags.Updated) != 0)
                     {
-                        if (!EntityManager.HasComponent<ParkingTarget>(entity))
-                            EntityManager.AddComponent<ParkingTarget>(entity);
+                        if (!EntityManager.TryGetComponent(carEntity, out ParkingTarget parkingTarget))
+                            EntityManager.AddComponent<ParkingTarget>(carEntity);
 
-                        EntityManager.SetComponentData(entity, GetParkingTarget(path));
+                        if ((pathOwner.m_State & PathFlags.Updated) != 0)
+                        {
+                            ParkingTarget newParkingTarget = GetParkingTarget(path);
+                            EntityManager.SetComponentData(carEntity, newParkingTarget);
+
+                            if (newParkingTarget.target != Entity.Null)
+                            {
+                                DynamicBuffer<QueuedVehicle> queue;
+                                if (!EntityManager.TryGetBuffer(newParkingTarget.target, false, out queue))
+                                    queue = EntityManager.AddBuffer<QueuedVehicle>(newParkingTarget.target);
+                                queue.Add(new QueuedVehicle(carEntity));
+                                EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
+                            }
+                        }
                     }
 
                     bool hideObsolete = false;
                     if (disableObsoleteHide)
                         return;
 
-                    if (EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> nextLanes))
+                    if (EntityManager.TryGetBuffer(carEntity, true, out DynamicBuffer<CarNavigationLane> nextLanes))
                     {
                         if (nextLanes.Length + path.Length - pathOwner.m_ElementIndex >= rerouteLimit)
                         {
@@ -108,7 +121,7 @@ namespace RealisticParking
                     if (hideObsolete)
                     {
                         pathOwner.m_State &= ~PathFlags.Obsolete;
-                        EntityManager.SetComponentData(entity, pathOwner);
+                        EntityManager.SetComponentData(carEntity, pathOwner);
                     }
                 }
             }
