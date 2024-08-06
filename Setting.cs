@@ -30,11 +30,16 @@ namespace RealisticParking
         [SettingsUISection(kSection, kSettingsGroup)]
         public int RerouteDistance { get; set; }
 
+        [SettingsUISlider(min = 1, max = 40, step = 1)]
+        [SettingsUISection(kSection, kSettingsGroup)]
+        public int GarageSpotsMultiplier { get; set; }
+
 
         public override void SetDefaults()
         {
             this.Enable = true;
             this.RerouteDistance = 6;
+            this.GarageSpotsMultiplier = 20;
         }
     }
 

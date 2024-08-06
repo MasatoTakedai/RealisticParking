@@ -20,8 +20,9 @@ namespace RealisticParking.Systems
         private Game.Objects.SearchSystem m_ObjectSearchSystem;
         private ParkingLaneDataSystem parkingLaneDataSystem;
         private CitySystem m_CitySystem;
-
         private EntityQuery m_LaneQuery;
+
+        private int garageSpotsMultiplier;
 
         protected override void OnCreate()
         {
@@ -30,6 +31,16 @@ namespace RealisticParking.Systems
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             parkingLaneDataSystem = base.World.GetOrCreateSystemManaged<ParkingLaneDataSystem>();
             parkingLaneDataSystem.Enabled = false;
+
+            Mod.INSTANCE.settings.onSettingsApplied += settings =>
+            {
+                if (settings.GetType() == typeof(Setting))
+                {
+                    this.UpdateSettings((Setting)settings);
+                }
+            };
+            this.UpdateSettings(Mod.INSTANCE.settings);
+
             m_LaneQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[1] { ComponentType.ReadOnly<Updated>() },
@@ -49,6 +60,19 @@ namespace RealisticParking.Systems
                 Any = new ComponentType[2]
                 {
                 ComponentType.ReadOnly<Game.Net.ParkingLane>(),
+                ComponentType.ReadOnly<GarageLane>()
+                },
+                None = new ComponentType[3]
+                {
+                ComponentType.ReadOnly<Updated>(),
+                ComponentType.ReadOnly<Deleted>(),
+                ComponentType.ReadOnly<Temp>()
+                }
+            }, new EntityQueryDesc
+            {
+                All = new ComponentType[0],
+                Any = new ComponentType[1]
+                {
                 ComponentType.ReadOnly<GarageLane>()
                 },
                 None = new ComponentType[3]
@@ -103,9 +127,15 @@ namespace RealisticParking.Systems
             updateLaneJob.m_ActivityLocations = SystemAPI.GetBufferLookup<ActivityLocationElement>(isReadOnly: true);
             updateLaneJob.m_City = m_CitySystem.City;
             updateLaneJob.m_MovingObjectSearchTree = m_ObjectSearchSystem.GetMovingSearchTree(readOnly: true, out var dependencies);
+            updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
             base.Dependency = jobHandle;
+        }
+
+        private void UpdateSettings(Setting settings)
+        {
+            this.garageSpotsMultiplier = settings.GarageSpotsMultiplier;
         }
     }
 }

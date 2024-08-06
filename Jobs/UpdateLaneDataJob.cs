@@ -1,4 +1,6 @@
-﻿using Colossal.Mathematics;
+﻿/* lines edited: 224 */
+
+using Colossal.Mathematics;
 using Colossal.Collections;
 using Unity.Burst;
 using Unity.Burst.Intrinsics;
@@ -43,6 +45,8 @@ namespace RealisticParking
                 }
             }
         }
+
+        public int garageSpotsMultiplier;
 
         [ReadOnly]
         public EntityTypeHandle m_EntityType;
@@ -332,7 +336,7 @@ namespace RealisticParking
                     WorkplaceData componentData8;
                     if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef.m_Prefab, out var componentData7))
                     {
-                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, Mathf.RoundToInt(componentData7.m_SpaceMultiplier));
+                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, Mathf.RoundToInt(componentData7.m_SpaceMultiplier) * garageSpotsMultiplier);
                     }
                     else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef.m_Prefab, out componentData8))
                     {
