@@ -13,7 +13,7 @@ using Game.City;
 using Game.Objects;
 using Game.Pathfind;
 
-namespace RealisticParking.Systems
+namespace RealisticParking
 {
     public partial class NewParkingLaneDataSystem : GameSystemBase
     {

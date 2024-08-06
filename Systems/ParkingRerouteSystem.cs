@@ -10,13 +10,14 @@ using Game.Vehicles;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace RealisticParking.Systems
+namespace RealisticParking
 {
     public partial class ParkingRerouteSystem : GameSystemBase
     {
         private SimulationSystem simulationSystem;
         private EntityQuery personalCarQuery;
         [ReadOnly] public ComponentLookup<Game.Net.CarLane> carLaneLookup;
+        [ReadOnly] public ComponentLookup<Game.Net.ParkingLane> parkingLaneLookup;
 
         protected override void OnCreate()
         {
@@ -51,13 +52,14 @@ namespace RealisticParking.Systems
                 }
             });
 
-            carLaneLookup = SystemAPI.GetComponentLookup<Game.Net.CarLane>(true);
+            carLaneLookup = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true);
+            parkingLaneLookup = SystemAPI.GetComponentLookup<Game.Net.ParkingLane>(isReadOnly: true);
         }
 
 
         private int frameCount = 0;
         private int rerouteLimit;
-        private bool disable;
+        private bool disableObsoleteHide;
 
         protected override void OnUpdate()
         {
@@ -75,14 +77,21 @@ namespace RealisticParking.Systems
             for (int i = 0; i < carEntities.Length; i++)
             {
                 Entity entity = carEntities[i];
-                if (EntityManager.TryGetComponent(entity, out PathOwner pathOwner))
+                if (EntityManager.TryGetComponent(entity, out PathOwner pathOwner) && EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<PathElement> path))
                 {
+                    if ((pathOwner.m_State & PathFlags.Updated) != 0)
+                    {
+                        if (!EntityManager.HasComponent<ParkingTarget>(entity))
+                            EntityManager.AddComponent<ParkingTarget>(entity);
+
+                        EntityManager.SetComponentData(entity, GetParkingTarget(path));
+                    }
+
                     bool hideObsolete = false;
-                    if (disable)
+                    if (disableObsoleteHide)
                         return;
 
-                    if (EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> nextLanes) 
-                        && EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<PathElement> path))
+                    if (EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> nextLanes))
                     {
                         if (nextLanes.Length + path.Length - pathOwner.m_ElementIndex >= rerouteLimit)
                         {
@@ -105,9 +114,29 @@ namespace RealisticParking.Systems
             }
         }
 
+        private ParkingTarget GetParkingTarget(DynamicBuffer<PathElement> path)
+        {
+            return new ParkingTarget(ParkingTargetBinSearch(path, 0, path.Length - 1));
+        }
+        private Entity ParkingTargetBinSearch(DynamicBuffer<PathElement> path, int low, int high) {
+            while (low <= high)
+            {
+                int mid = low + (high - low) / 2;
+
+                if (carLaneLookup.HasComponent(path[mid].m_Target))
+                    low = mid + 1;
+                else if (parkingLaneLookup.HasComponent(path[mid].m_Target))
+                    return path[mid].m_Target;
+                else
+                    high = mid - 1;
+            }
+
+            return default;
+        }
+
         private void UpdateSettings(Setting settings)
         {
-            this.disable = !settings.Enable;
+            this.disableObsoleteHide = !settings.Enable;
             this.rerouteLimit = settings.RerouteDistance;
         }
     }
