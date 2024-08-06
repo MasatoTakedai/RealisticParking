@@ -91,7 +91,7 @@ namespace RealisticParking
 
                             if (newParkingTarget.target != Entity.Null)
                             {
-                                EntityManager.AddComponent<VehicleQueued>(newParkingTarget.target);
+                                EntityManager.AddComponent<CarQueued>(newParkingTarget.target);
                                 EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
                             }
                         }

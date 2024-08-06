@@ -24,7 +24,8 @@ namespace RealisticParking
     {
         // custom code start
         public int garageSpotsMultiplier;
-        public BufferLookup<QueuedVehicle> queuedVehicleLookup;
+        public ComponentLookup<CarQueued> 
+        public ComponentLookup<ParkingPathfindLimit> parkingPathfindLimitLookup;
 
         private float CalculateCustomFreeSpace(Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
@@ -33,15 +34,6 @@ namespace RealisticParking
         }
 
         private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
-
-        private void ProcessQueuedVehicles(Entity entity)
-        {
-            if (queuedVehicleLookup.TryGetBuffer(entity, out DynamicBuffer<QueuedVehicle> queue)) {
-                for (int i = 0; i < queue.Length; i++)
-                {
-                }
-            }
-        }
         // custom code end
 
 
@@ -190,7 +182,6 @@ namespace RealisticParking
                     Bounds1 blockedRange = GetBlockedRange(owner, laneData);
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
-                    ProcessQueuedVehicles(nativeArray6[i]);
                     parkingLane.m_FreeSpace = CalculateCustomFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
                     GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
