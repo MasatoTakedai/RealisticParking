@@ -8,6 +8,7 @@ using Game.Prefabs;
 using Game.SceneFlow;
 using Game.Simulation;
 using Game.Vehicles;
+using RealisticParking.Systems;
 
 namespace RealisticParking
 {
@@ -33,7 +34,7 @@ namespace RealisticParking
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
             updateSystem.UpdateAfter<ParkingRerouteSystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAfter<FreeParkingSystem>(SystemUpdatePhase.ModificationEnd);
+            updateSystem.UpdateBefore<FreeParkingSystem>(SystemUpdatePhase.ModificationEnd);
         }
 
         public void OnDispose()

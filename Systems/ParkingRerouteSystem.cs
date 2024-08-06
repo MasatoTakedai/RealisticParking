@@ -10,7 +10,7 @@ using Game.Vehicles;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace RealisticParking
+namespace RealisticParking.Systems
 {
     public partial class ParkingRerouteSystem : GameSystemBase
     {
@@ -78,7 +78,10 @@ namespace RealisticParking
                 if (EntityManager.TryGetComponent(entity, out PathOwner pathOwner))
                 {
                     bool hideObsolete = false;
-                    if (!disable && EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> nextLanes) 
+                    if (disable)
+                        return;
+
+                    if (EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<CarNavigationLane> nextLanes) 
                         && EntityManager.TryGetBuffer(entity, true, out DynamicBuffer<PathElement> path))
                     {
                         if (nextLanes.Length + path.Length - pathOwner.m_ElementIndex >= rerouteLimit)
