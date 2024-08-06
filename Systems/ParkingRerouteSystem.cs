@@ -7,6 +7,7 @@ using Game.Pathfind;
 using Game.Simulation;
 using Game.Tools;
 using Game.Vehicles;
+using RealisticParking.Components;
 using Unity.Collections;
 using Unity.Entities;
 
@@ -91,10 +92,7 @@ namespace RealisticParking
 
                             if (newParkingTarget.target != Entity.Null)
                             {
-                                DynamicBuffer<QueuedVehicle> queue;
-                                if (!EntityManager.TryGetBuffer(newParkingTarget.target, false, out queue))
-                                    queue = EntityManager.AddBuffer<QueuedVehicle>(newParkingTarget.target);
-                                queue.Add(new QueuedVehicle(carEntity));
+                                EntityManager.AddComponent<VehicleQueued>(newParkingTarget.target);
                                 EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
                             }
                         }
