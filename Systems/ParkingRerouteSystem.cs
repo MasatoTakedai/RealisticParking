@@ -84,16 +84,13 @@ namespace RealisticParking
                         if (!EntityManager.TryGetComponent(carEntity, out ParkingTarget parkingTarget))
                             EntityManager.AddComponent<ParkingTarget>(carEntity);
 
-                        if ((pathOwner.m_State & PathFlags.Updated) != 0)
-                        {
-                            ParkingTarget newParkingTarget = GetParkingTarget(path);
-                            EntityManager.SetComponentData(carEntity, newParkingTarget);
+                        ParkingTarget newParkingTarget = GetParkingTarget(path);
+                        EntityManager.SetComponentData(carEntity, newParkingTarget);
 
-                            if (newParkingTarget.target != Entity.Null)
-                            {
-                                EntityManager.AddComponent<CarQueued>(newParkingTarget.target);
-                                EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
-                            }
+                        if (newParkingTarget.target != Entity.Null)
+                        {
+                            EntityManager.AddComponent<CarQueued>(newParkingTarget.target);
+                            EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
                         }
                     }
 

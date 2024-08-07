@@ -12,21 +12,25 @@ using Game.Buildings;
 using Game.City;
 using Game.Objects;
 using Game.Pathfind;
+using Unity.Collections;
 
 namespace RealisticParking
 {
     public partial class NewParkingLaneDataSystem : GameSystemBase
     {
+        private EntityCommandBufferSystem entityCommandBufferSystem;
         private Game.Objects.SearchSystem m_ObjectSearchSystem;
         private ParkingLaneDataSystem parkingLaneDataSystem;
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
+        private EntityQuery updatedVehicleQueueQuery;
 
         private int garageSpotsMultiplier;
 
         protected override void OnCreate()
         {
             base.OnCreate();
+            this.entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationEndBarrier>();
             m_ObjectSearchSystem = base.World.GetOrCreateSystemManaged<Game.Objects.SearchSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             parkingLaneDataSystem = base.World.GetOrCreateSystemManaged<ParkingLaneDataSystem>();
@@ -68,25 +72,34 @@ namespace RealisticParking
                 ComponentType.ReadOnly<Deleted>(),
                 ComponentType.ReadOnly<Temp>()
                 }
-            }, new EntityQueryDesc
+            });
+
+            updatedVehicleQueueQuery = GetEntityQuery(new EntityQueryDesc
             {
-                All = new ComponentType[0],
+                All = new ComponentType[1] { ComponentType.ReadOnly<PathfindUpdated>() },
                 Any = new ComponentType[1]
                 {
-                ComponentType.ReadOnly<GarageLane>()
+                ComponentType.ReadOnly<Game.Net.ParkingLane>(),
                 },
-                None = new ComponentType[3]
+                None = new ComponentType[]
                 {
-                ComponentType.ReadOnly<Updated>(),
                 ComponentType.ReadOnly<Deleted>(),
                 ComponentType.ReadOnly<Temp>()
                 }
             });
+
             RequireForUpdate(m_LaneQuery);
         }
 
         protected override void OnUpdate()
         {
+            NativeArray<Entity> parkingEntities = this.updatedVehicleQueueQuery.ToEntityArray(Allocator.Temp);
+            for (int i = 0; i < parkingEntities.Length; i++)
+            {
+                Entity parkingEntity = parkingEntities[i];
+                
+            }
+
             UpdateLaneDataJob updateLaneJob = default(UpdateLaneDataJob);
             updateLaneJob.m_EntityType = SystemAPI.GetEntityTypeHandle();
             updateLaneJob.m_CurveType = SystemAPI.GetComponentTypeHandle<Curve>(isReadOnly: true);
@@ -128,7 +141,10 @@ namespace RealisticParking
             updateLaneJob.m_City = m_CitySystem.City;
             updateLaneJob.m_MovingObjectSearchTree = m_ObjectSearchSystem.GetMovingSearchTree(readOnly: true, out var dependencies);
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
-            updateLaneJob.queuedVehicleLookup = SystemAPI.GetBufferLookup<QueuedVehicle>(isReadOnly: false);
+            updateLaneJob.parkingPathfindLimitLookup = SystemAPI.GetComponentLookup<ParkingPathfindLimit>(isReadOnly: true);
+            updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
+            EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
+            updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
             base.Dependency = jobHandle;
