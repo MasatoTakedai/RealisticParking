@@ -15,7 +15,6 @@ using Unity.Burst;
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 
 namespace RealisticParking
@@ -23,6 +22,28 @@ namespace RealisticParking
     [BurstCompile]
     public struct PersonalCarTickJob : IJobChunk
     {
+        // custom code start
+        [ReadOnly]
+        public ComponentLookup<ParkingTarget> parkingTargetLookup;
+
+        private void SetCustomParkingComponents(Entity entity, int jobIndex, PathElement pathElement)
+        {
+            if (parkingTargetLookup.HasComponent(entity))
+            {
+                m_CommandBuffer.AddComponent<CarRerouted>(jobIndex, parkingTargetLookup[entity].target);
+                m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, parkingTargetLookup[entity].target);
+            }
+            else
+                m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
+
+            m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));
+            m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
+            m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, pathElement.m_Target);
+        }
+        // custom code end
+
+
+
         [ReadOnly]
         public EntityTypeHandle m_EntityType;
 
@@ -216,7 +237,7 @@ namespace RealisticParking
             Random random = m_RandomSeed.GetRandom(entity.Index);
             if (VehicleUtils.ResetUpdatedPath(ref pathOwner))
             {
-                ResetPath(entity, ref random, ref personalCar, ref car, ref currentLane, ref pathOwner);
+                ResetPath(entity, jobIndex, ref random, ref personalCar, ref car, ref currentLane, ref pathOwner);
             }
             if (((personalCar.m_State & (PersonalCarFlags.Transporting | PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) == 0 && !m_EntityLookup.Exists(target.m_Target)) || VehicleUtils.PathfindFailed(pathOwner))
             {
@@ -441,7 +462,7 @@ namespace RealisticParking
             pathOwner.m_State |= PathFlags.Obsolete;
         }
 
-        private void ResetPath(Entity entity, ref Random random, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner)
+        private void ResetPath(Entity entity, int jobIndex, ref Random random, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner)
         {
             if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
             {
@@ -497,6 +518,7 @@ namespace RealisticParking
                     curvePos = random.NextFloat(0.05f, 0.95f);
                 }
                 VehicleUtils.SetParkingCurvePos(path, pathOwner, i, currentLane.m_Lane, curvePos, m_CurveData);
+                SetCustomParkingComponents(entity, jobIndex, pathElement2);
                 break;
             }
         }

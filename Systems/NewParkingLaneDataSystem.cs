@@ -24,8 +24,6 @@ namespace RealisticParking
         private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
-        private EntityQuery updatedVehicleQueueQuery;
-
         private int garageSpotsMultiplier;
 
         protected override void OnCreate()

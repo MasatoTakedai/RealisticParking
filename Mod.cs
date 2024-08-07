@@ -8,6 +8,7 @@ using Game.Prefabs;
 using Game.SceneFlow;
 using Game.Simulation;
 using Game.Vehicles;
+using Unity.Entities;
 
 namespace RealisticParking
 {
@@ -29,7 +30,6 @@ namespace RealisticParking
             settings = new Setting(this);
             settings.RegisterInOptionsUI();
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(settings));
-
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
             //updateSystem.UpdateAfter<ParkingRerouteSystem>(SystemUpdatePhase.MainLoop);
