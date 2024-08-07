@@ -21,6 +21,7 @@ namespace RealisticParking
         private EntityCommandBufferSystem entityCommandBufferSystem;
         private Game.Objects.SearchSystem m_ObjectSearchSystem;
         private ParkingLaneDataSystem parkingLaneDataSystem;
+        private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
         private EntityQuery updatedVehicleQueueQuery;
@@ -30,7 +31,8 @@ namespace RealisticParking
         protected override void OnCreate()
         {
             base.OnCreate();
-            this.entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationEndBarrier>();
+            entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationEndBarrier>();
+            simulationSystem = World.GetExistingSystemManaged<SimulationSystem>();
             m_ObjectSearchSystem = base.World.GetOrCreateSystemManaged<Game.Objects.SearchSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             parkingLaneDataSystem = base.World.GetOrCreateSystemManaged<ParkingLaneDataSystem>();
@@ -143,6 +145,7 @@ namespace RealisticParking
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
             updateLaneJob.parkingPathfindLimitLookup = SystemAPI.GetComponentLookup<ParkingPathfindLimit>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
+            updateLaneJob.frameDuration = simulationSystem.frameDuration;
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));

@@ -16,6 +16,7 @@ using Game.Prefabs;
 using Game.Vehicles;
 using Unity.Collections;
 using UnityEngine;
+using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace RealisticParking
 {
@@ -27,11 +28,24 @@ namespace RealisticParking
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         public ComponentLookup<CarQueued> carQueuedLookup;
         public ComponentLookup<ParkingPathfindLimit> parkingPathfindLimitLookup;
+        public float frameDuration;
 
-        private float CalculateCustomFreeSpace(Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
+        private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
-            float vanillaValue = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-            return vanillaValue;
+            float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+            if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
+            {
+                
+
+                if (freeSpace == 0)
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                if (limit.limitValue > 6)
+                {
+                    freeSpace = 0.1f;
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                }
+            }
+            return freeSpace;
         }
 
         private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
@@ -200,7 +214,7 @@ namespace RealisticParking
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
                     ProcessQueuedCars(nativeArray6[i], unfilteredChunkIndex);
-                    parkingLane.m_FreeSpace = CalculateCustomFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+                    parkingLane.m_FreeSpace = CalculateCustomFreeSpace(nativeArray6[i], unfilteredChunkIndex, curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
                     GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
                     if (disabled)

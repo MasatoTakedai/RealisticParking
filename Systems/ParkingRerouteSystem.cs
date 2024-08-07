@@ -55,8 +55,6 @@ namespace RealisticParking
             parkingLaneLookup = SystemAPI.GetComponentLookup<Game.Net.ParkingLane>(isReadOnly: true);
         }
 
-
-        private int frameCount = 0;
         private int rerouteLimit;
         private bool disableObsoleteHide;
 
@@ -67,7 +65,7 @@ namespace RealisticParking
                 return;
             }
 
-            if (frameCount++ % 4 != 0)
+            if (this.simulationSystem.frameIndex % 4 != 0)
             {
                 return;
             }
