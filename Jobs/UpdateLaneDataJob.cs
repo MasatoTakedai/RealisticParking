@@ -27,25 +27,26 @@ namespace RealisticParking
         public int garageSpotsMultiplier;
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         public ComponentLookup<CarQueued> carQueuedLookup;
+        public ComponentLookup<CarRerouted> carReroutedLookup;
         public ComponentLookup<ParkingPathfindLimit> parkingPathfindLimitLookup;
-        public float frameDuration;
+        public float frameIndex;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+            float newFreeSpace = freeSpace;
             if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
             {
-                
-
-                if (freeSpace == 0)
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
                 if (limit.limitValue > 6)
+                    newFreeSpace -= math.min(freeSpace - 0.1f, math.floor((limit.limitValue - 6) / 2) * 6);
+
+                if (freeSpace < 2)
                 {
-                    freeSpace = 0.1f;
+                    newFreeSpace = freeSpace;
                     commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
                 }
             }
-            return freeSpace;
+            return newFreeSpace;
         }
 
         private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
@@ -63,6 +64,20 @@ namespace RealisticParking
                     commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(1));
                 }
                 commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
+            }
+
+            if (carReroutedLookup.HasComponent(entity))
+            {
+                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
+                {
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                }
+                else
+                {
+                    commandBuffer.AddComponent<ParkingPathfindLimit>(unfilteredChunkIndex, entity);
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                }
+                commandBuffer.RemoveComponent<CarRerouted>(unfilteredChunkIndex, entity);
             }
         }
         // custom code end

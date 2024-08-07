@@ -76,32 +76,11 @@ namespace RealisticParking
                 }
             });
 
-            updatedVehicleQueueQuery = GetEntityQuery(new EntityQueryDesc
-            {
-                All = new ComponentType[1] { ComponentType.ReadOnly<PathfindUpdated>() },
-                Any = new ComponentType[1]
-                {
-                ComponentType.ReadOnly<Game.Net.ParkingLane>(),
-                },
-                None = new ComponentType[]
-                {
-                ComponentType.ReadOnly<Deleted>(),
-                ComponentType.ReadOnly<Temp>()
-                }
-            });
-
             RequireForUpdate(m_LaneQuery);
         }
 
         protected override void OnUpdate()
         {
-            NativeArray<Entity> parkingEntities = this.updatedVehicleQueueQuery.ToEntityArray(Allocator.Temp);
-            for (int i = 0; i < parkingEntities.Length; i++)
-            {
-                Entity parkingEntity = parkingEntities[i];
-                
-            }
-
             UpdateLaneDataJob updateLaneJob = default(UpdateLaneDataJob);
             updateLaneJob.m_EntityType = SystemAPI.GetEntityTypeHandle();
             updateLaneJob.m_CurveType = SystemAPI.GetComponentTypeHandle<Curve>(isReadOnly: true);
@@ -145,7 +124,8 @@ namespace RealisticParking
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
             updateLaneJob.parkingPathfindLimitLookup = SystemAPI.GetComponentLookup<ParkingPathfindLimit>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            updateLaneJob.frameDuration = simulationSystem.frameDuration;
+            updateLaneJob.carReroutedLookup = SystemAPI.GetComponentLookup<CarRerouted>(isReadOnly: true);
+            updateLaneJob.frameIndex = simulationSystem.frameIndex;
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));

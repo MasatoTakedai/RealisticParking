@@ -74,29 +74,42 @@ namespace RealisticParking
             for (int i = 0; i < carEntities.Length; i++)
             {
                 Entity carEntity = carEntities[i];
-                if (EntityManager.TryGetComponent(carEntity, out PathOwner pathOwner)
-                    && EntityManager.TryGetBuffer(carEntity, true, out DynamicBuffer<PathElement> path))
+                if (EntityManager.TryGetComponent(carEntity, out PathOwner pathOwner))
                 {
-                    if ((pathOwner.m_State & PathFlags.Updated) != 0)
+                    if ((pathOwner.m_State & PathFlags.Updated) != 0 || EntityManager.HasComponent<CarRerouted>(carEntity))
                     {
                         if (!EntityManager.TryGetComponent(carEntity, out ParkingTarget parkingTarget))
                             EntityManager.AddComponent<ParkingTarget>(carEntity);
 
-                        ParkingTarget newParkingTarget = GetParkingTarget(path);
-                        EntityManager.SetComponentData(carEntity, newParkingTarget);
-
-                        if (newParkingTarget.target != Entity.Null)
+                        if (EntityManager.TryGetBuffer(carEntity, isReadOnly:true, out DynamicBuffer<PathElement> newPath))
                         {
-                            EntityManager.AddComponent<CarQueued>(newParkingTarget.target);
-                            EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
+                            ParkingTarget newParkingTarget = GetParkingTarget(newPath);
+                            EntityManager.SetComponentData(carEntity, newParkingTarget);
+                            EntityManager.RemoveComponent<CarRerouted>(carEntity); 
+
+                            if (parkingTarget.target != newParkingTarget.target && EntityManager.HasComponent<ParkingLane>(parkingTarget.target))
+                            {
+                                EntityManager.AddComponent<CarRerouted>(parkingTarget.target);
+                                EntityManager.AddComponent<PathfindUpdated>(parkingTarget.target);
+                            }
+
+                            if (newParkingTarget.target != Entity.Null)
+                            {
+                                EntityManager.AddComponent<CarQueued>(newParkingTarget.target);
+                                EntityManager.AddComponent<PathfindUpdated>(newParkingTarget.target);
+                            }
                         }
+                        else
+                            EntityManager.AddComponent<CarRerouted>(carEntity);
+
                     }
 
                     bool hideObsolete = false;
                     if (disableObsoleteHide)
                         return;
 
-                    if (EntityManager.TryGetBuffer(carEntity, true, out DynamicBuffer<CarNavigationLane> nextLanes))
+                    if (EntityManager.TryGetBuffer(carEntity, true, out DynamicBuffer<CarNavigationLane> nextLanes) 
+                        && EntityManager.TryGetBuffer(carEntity, isReadOnly: true, out DynamicBuffer<PathElement> path))
                     {
                         if (nextLanes.Length + path.Length - pathOwner.m_ElementIndex >= rerouteLimit)
                         {

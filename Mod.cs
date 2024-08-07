@@ -32,7 +32,11 @@ namespace RealisticParking
 
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
-            updateSystem.UpdateBefore<ParkingRerouteSystem>(SystemUpdatePhase.GameSimulation);
+            //updateSystem.UpdateAfter<ParkingRerouteSystem>(SystemUpdatePhase.MainLoop);
+            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
+            updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateBefore<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
         }
 
