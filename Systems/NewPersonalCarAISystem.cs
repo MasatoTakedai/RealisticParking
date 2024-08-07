@@ -15,8 +15,6 @@ using Game.Vehicles;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using UnityEngine.Scripting;
-using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Game.Prefabs;
 
@@ -26,38 +24,22 @@ namespace RealisticParking
     {
         public partial class Actions : GameSystemBase
         {
-            private struct TypeHandle
-            {
-                public BufferLookup<Resources> __Game_Economy_Resources_RW_BufferLookup;
-
-                [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                public void __AssignHandles(ref SystemState state)
-                {
-                    __Game_Economy_Resources_RW_BufferLookup = state.GetBufferLookup<Resources>();
-                }
-            }
-
             public JobHandle m_Dependency;
 
             public NativeQueue<MoneyTransfer> m_MoneyTransferQueue;
 
-            private TypeHandle __TypeHandle;
-
             protected override void OnUpdate()
             {
+                Mod.log.Info("creating action job");
                 JobHandle dependsOn = JobHandle.CombineDependencies(base.Dependency, m_Dependency);
-                __TypeHandle.__Game_Economy_Resources_RW_BufferLookup.Update(ref base.CheckedStateRef);
+                SystemAPI.GetBufferLookup<Resources>().Update(ref base.CheckedStateRef);
                 TransferMoneyJob jobData = default(TransferMoneyJob);
-                jobData.m_Resources = __TypeHandle.__Game_Economy_Resources_RW_BufferLookup;
+                jobData.m_Resources = SystemAPI.GetBufferLookup<Resources>();
                 jobData.m_MoneyTransferQueue = m_MoneyTransferQueue;
                 JobHandle jobHandle = IJobExtensions.Schedule(jobData, dependsOn);
                 m_MoneyTransferQueue.Dispose(jobHandle);
                 base.Dependency = jobHandle;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            private void __AssignQueries(ref SystemState state)
-            {
+                Mod.log.Info("created and scheduled action job");
             }
         }
 
@@ -93,6 +75,9 @@ namespace RealisticParking
             }
         }
 
+        private PersonalCarAISystem personalCarAISystem;
+        private PersonalCarAISystem.Actions personalCarAIActions;
+
         private EndFrameBarrier m_EndFrameBarrier;
 
         private SimulationSystem m_SimulationSystem;
@@ -115,10 +100,14 @@ namespace RealisticParking
 
         private ComponentTypeSet m_MovingToParkedCarAddTypes;
 
-        [Preserve]
         protected override void OnCreate()
         {
             base.OnCreate();
+            personalCarAISystem = base.World.GetOrCreateSystemManaged<PersonalCarAISystem>();
+            personalCarAISystem.Enabled = false;
+            personalCarAIActions = base.World.GetOrCreateSystemManaged<PersonalCarAISystem.Actions>();
+            personalCarAIActions.Enabled = false;
+
             m_EndFrameBarrier = base.World.GetOrCreateSystemManaged<EndFrameBarrier>();
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_PathfindSetupSystem = base.World.GetOrCreateSystemManaged<PathfindSetupSystem>();
@@ -145,9 +134,9 @@ namespace RealisticParking
             m_MovingToParkedCarAddTypes = new ComponentTypeSet(ComponentType.ReadWrite<ParkedCar>(), ComponentType.ReadWrite<Stopped>(), ComponentType.ReadWrite<Updated>());
         }
 
-        [Preserve]
         protected override void OnUpdate()
         {
+            Mod.log.Info("creating jobs");
             uint index = m_SimulationSystem.frameIndex % 16;
             m_VehicleQuery.ResetFilter();
             m_VehicleQuery.SetSharedComponentFilter(new UpdateFrame(index));
@@ -196,7 +185,7 @@ namespace RealisticParking
             jobData.m_HouseholdCitizens = SystemAPI.GetBufferLookup<HouseholdCitizen>(isReadOnly: true);
             jobData.m_TargetData = SystemAPI.GetComponentLookup<Target>(isReadOnly: true);
             jobData.m_PathOwnerData = SystemAPI.GetComponentLookup<PathOwner>(isReadOnly: true);
-            jobData.m_PathElements = SystemAPI.GetBufferLookup<PathElement>(isReadOnly: true);
+            jobData.m_PathElements = SystemAPI.GetBufferLookup<PathElement>(isReadOnly: false);
             jobData.m_RandomSeed = RandomSeed.Next();
             jobData.m_City = m_CitySystem.City;
             jobData.m_TimeOfDay = m_TimeSystem.normalizedTime;
@@ -214,6 +203,7 @@ namespace RealisticParking
             m_ServiceFeeSystem.AddQueueWriter(jobHandle);
             m_Actions.m_Dependency = jobHandle;
             base.Dependency = jobHandle;
+            Mod.log.Info("created and scheduled jobs");
         }
     }
 }
