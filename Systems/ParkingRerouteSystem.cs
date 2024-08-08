@@ -76,7 +76,7 @@ namespace RealisticParking
                 Entity carEntity = carEntities[i];
                 if (EntityManager.TryGetComponent(carEntity, out PathOwner pathOwner))
                 {
-                    if ((pathOwner.m_State & PathFlags.Updated) != 0 || EntityManager.HasComponent<CarRerouted>(carEntity))
+                    if ((pathOwner.m_State & PathFlags.Updated) != 0 || EntityManager.HasComponent<CarDequeued>(carEntity))
                     {
                         if (!EntityManager.TryGetComponent(carEntity, out ParkingTarget parkingTarget))
                             EntityManager.AddComponent<ParkingTarget>(carEntity);
@@ -85,11 +85,11 @@ namespace RealisticParking
                         {
                             ParkingTarget newParkingTarget = GetParkingTarget(newPath);
                             EntityManager.SetComponentData(carEntity, newParkingTarget);
-                            EntityManager.RemoveComponent<CarRerouted>(carEntity); 
+                            EntityManager.RemoveComponent<CarDequeued>(carEntity); 
 
                             if (parkingTarget.target != newParkingTarget.target && EntityManager.HasComponent<ParkingLane>(parkingTarget.target))
                             {
-                                EntityManager.AddComponent<CarRerouted>(parkingTarget.target);
+                                EntityManager.AddComponent<CarDequeued>(parkingTarget.target);
                                 EntityManager.AddComponent<PathfindUpdated>(parkingTarget.target);
                             }
 
@@ -100,7 +100,7 @@ namespace RealisticParking
                             }
                         }
                         else
-                            EntityManager.AddComponent<CarRerouted>(carEntity);
+                            EntityManager.AddComponent<CarDequeued>(carEntity);
 
                     }
 

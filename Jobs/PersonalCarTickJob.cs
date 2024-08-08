@@ -32,7 +32,7 @@ namespace RealisticParking
         {
             if (parkingTargetLookup.HasComponent(entity))
             {
-                m_CommandBuffer.AddComponent<CarRerouted>(jobIndex, parkingTargetLookup[entity].target);
+                m_CommandBuffer.AddComponent<CarDequeued>(jobIndex, parkingTargetLookup[entity].target);
             }
             else
                 m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);

@@ -2,7 +2,7 @@
 
 namespace RealisticParking
 {
-    public struct CarRerouted : IComponentData, IQueryTypeParameter
+    public struct CarDequeued : IComponentData, IQueryTypeParameter
     {
     }
 }

@@ -15,7 +15,7 @@ namespace RealisticParking
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public EntityTypeHandle entityType;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
-        [ReadOnly] public ComponentLookup<CarRerouted> carReroutedLookup;
+        [ReadOnly] public ComponentLookup<CarDequeued> carDequeuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -54,7 +54,7 @@ namespace RealisticParking
                     {
                         commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                     }
-                    commandBuffer.RemoveComponent<CarRerouted>(unfilteredChunkIndex, entity);
+                    commandBuffer.RemoveComponent<CarDequeued>(unfilteredChunkIndex, entity);
                 }
             }
         }
@@ -85,7 +85,7 @@ namespace RealisticParking
                 Any = new ComponentType[2]
                 {
                 ComponentType.ReadOnly<CarQueued>(),
-                ComponentType.ReadOnly<CarRerouted>()
+                ComponentType.ReadOnly<CarDequeued>()
                 },
                 None = new ComponentType[2]
                 {
@@ -98,7 +98,7 @@ namespace RealisticParking
                 Any = new ComponentType[2]
                 {
                 ComponentType.ReadOnly<CarQueued>(),
-                ComponentType.ReadOnly<CarRerouted>()
+                ComponentType.ReadOnly<CarDequeued>()
                 },
                 None = new ComponentType[3]
                 {
@@ -117,7 +117,7 @@ namespace RealisticParking
             parkingDemandJob.entityType = SystemAPI.GetEntityTypeHandle();
             parkingDemandJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             parkingDemandJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            parkingDemandJob.carReroutedLookup = SystemAPI.GetComponentLookup<CarRerouted>(isReadOnly: true);
+            parkingDemandJob.carDequeuedLookup = SystemAPI.GetComponentLookup<CarDequeued>(isReadOnly: true);
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             parkingDemandJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(parkingDemandJob, updatedParkingQuery, base.Dependency);
