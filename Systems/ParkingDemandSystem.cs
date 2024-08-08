@@ -43,7 +43,7 @@ namespace RealisticParking
                     commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
                 }
 
-                if (carReroutedLookup.HasComponent(entity))
+                if (carQueuedLookup.HasComponent(entity))
                 {
                     if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && demandData.demand != 0)
                     {
