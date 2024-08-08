@@ -33,14 +33,12 @@ namespace RealisticParking
             if (parkingTargetLookup.HasComponent(entity))
             {
                 m_CommandBuffer.AddComponent<CarRerouted>(jobIndex, parkingTargetLookup[entity].target);
-                m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, parkingTargetLookup[entity].target);
             }
             else
                 m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
 
             m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));
             m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
-            m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, pathElement.m_Target);
         }
 
         private int GetRerouteLimit() { return rerouteLimit; }

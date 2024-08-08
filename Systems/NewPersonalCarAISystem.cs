@@ -30,7 +30,6 @@ namespace RealisticParking
 
             protected override void OnUpdate()
             {
-                Mod.log.Info("creating action job");
                 JobHandle dependsOn = JobHandle.CombineDependencies(base.Dependency, m_Dependency);
                 SystemAPI.GetBufferLookup<Resources>().Update(ref base.CheckedStateRef);
                 TransferMoneyJob jobData = default(TransferMoneyJob);
@@ -39,7 +38,6 @@ namespace RealisticParking
                 JobHandle jobHandle = IJobExtensions.Schedule(jobData, dependsOn);
                 m_MoneyTransferQueue.Dispose(jobHandle);
                 base.Dependency = jobHandle;
-                Mod.log.Info("created and scheduled action job");
             }
         }
 
@@ -136,7 +134,6 @@ namespace RealisticParking
 
         protected override void OnUpdate()
         {
-            Mod.log.Info("creating jobs");
             uint index = m_SimulationSystem.frameIndex % 16;
             m_VehicleQuery.ResetFilter();
             m_VehicleQuery.SetSharedComponentFilter(new UpdateFrame(index));
@@ -205,7 +202,6 @@ namespace RealisticParking
             m_ServiceFeeSystem.AddQueueWriter(jobHandle);
             m_Actions.m_Dependency = jobHandle;
             base.Dependency = jobHandle;
-            Mod.log.Info("created and scheduled jobs");
         }
     }
 }

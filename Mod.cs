@@ -38,6 +38,7 @@ namespace RealisticParking
             updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateBefore<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
+            updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification1);
         }
 
         public void OnDispose()

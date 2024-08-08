@@ -26,19 +26,19 @@ namespace RealisticParking
         // custom code start
         public int garageSpotsMultiplier;
         public EntityCommandBuffer.ParallelWriter commandBuffer;
-        public ComponentLookup<CarQueued> carQueuedLookup;
-        public ComponentLookup<CarRerouted> carReroutedLookup;
-        public ComponentLookup<ParkingDemand> parkingPathfindLimitLookup;
+        [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
+        [ReadOnly] public ComponentLookup<CarRerouted> carReroutedLookup;
+        [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
         public float frameIndex;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
             float newFreeSpace = freeSpace;
-            if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
+            if (parkingDemand.TryGetComponent(entity, out ParkingDemand limit))
             {
                 if (limit.demand > 6)
-                    newFreeSpace -= math.min(freeSpace - 0.1f, math.floor((limit.demand - 6) / 2) * 6);
+                    newFreeSpace -= math.min(freeSpace - 0.01f, math.ceil((limit.demand - 6) / 3) * 6);
 
                 if (freeSpace < 2)
                 {
@@ -50,36 +50,6 @@ namespace RealisticParking
         }
 
         private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
-
-        private void ProcessQueuedCars(Entity entity, int unfilteredChunkIndex)
-        {
-            if (carQueuedLookup.HasComponent(entity)) {
-                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
-                {
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand((short)(limit.demand + 1)));
-                }
-                else
-                {
-                    commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(1));
-                }
-                commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
-            }
-
-            if (carReroutedLookup.HasComponent(entity))
-            {
-                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
-                {
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
-                }
-                else
-                {
-                    commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
-                }
-                commandBuffer.RemoveComponent<CarRerouted>(unfilteredChunkIndex, entity);
-            }
-        }
         // custom code end
 
 
@@ -228,7 +198,6 @@ namespace RealisticParking
                     Bounds1 blockedRange = GetBlockedRange(owner, laneData);
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
-                    ProcessQueuedCars(nativeArray6[i], unfilteredChunkIndex);
                     parkingLane.m_FreeSpace = CalculateCustomFreeSpace(nativeArray6[i], unfilteredChunkIndex, curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
                     GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
