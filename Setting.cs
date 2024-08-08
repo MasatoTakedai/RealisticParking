@@ -9,41 +9,57 @@ using System.Collections.Generic;
 namespace RealisticParking
 {
     [FileLocation(nameof(RealisticParking))]
-    [SettingsUIGroupOrder(kDescGroup, kSettingsGroup)]
-    [SettingsUIShowGroupName(kDescGroup, kSettingsGroup)]
     public class Setting : ModSetting
     {
         public const string kSection = "Main";
 
-        public const string kDescGroup = "Description";
-        public const string kSettingsGroup = "Settings";
+        public const string kInducedDemandGroup = "Induced Demand";
+        public const string kRerouteDistanceGroup = "Reroute Distance";
+        public const string kGarageSpotsGroup = "Garage Spots";
 
         public Setting(IMod mod) : base(mod)
         {
 
         }
 
-        [SettingsUISection(kSection, kSettingsGroup)]
-        public bool Enable { get; set; }
+        [SettingsUISection(kSection, kInducedDemandGroup)]
+        public bool InducedDemandEnable { get; set; }
 
-        [SettingsUISlider(min = 500, max = 3000, step = 1)]
-        [SettingsUISection(kSection, kSettingsGroup)]
-        public uint ParkingDemandCooldown { get; set; }
+        [SettingsUISlider(min = 2000, max = 10000, step = 1)]
+        [SettingsUISection(kSection, kInducedDemandGroup)]
+        public int InducedDemandCooldown { get; set; }
 
-        [SettingsUISlider(min = 1, max = 20, step = 1)]
-        [SettingsUISection(kSection, kSettingsGroup)]
+        [SettingsUISlider(min = 0, max = 20, step = 1)]
+        [SettingsUISection(kSection, kInducedDemandGroup)]
+        public int InducedDemandInitialTolerance { get; set; }
+
+        [SettingsUISlider(min = 1, max = 10, step = 1)]
+        [SettingsUISection(kSection, kInducedDemandGroup)]
+        public int InducedDemandQueueSizePerSpot { get; set; }
+
+
+        [SettingsUISection(kSection, kRerouteDistanceGroup)]
+        public bool RerouteDistanceEnable { get; set; }
+
+        [SettingsUISlider(min = 1, max = 1000, step = 1)]
+        [SettingsUISection(kSection, kRerouteDistanceGroup)]
         public int RerouteDistance { get; set; }
 
+
         [SettingsUISlider(min = 1, max = 40, step = 1)]
-        [SettingsUISection(kSection, kSettingsGroup)]
+        [SettingsUISection(kSection, kGarageSpotsGroup)]
         public int GarageSpotsMultiplier { get; set; }
 
 
         public override void SetDefaults()
         {
-            this.Enable = true;
-            this.RerouteDistance = 6;
-            this.GarageSpotsMultiplier = 20;
+            InducedDemandEnable = true;
+            InducedDemandCooldown = 5000;
+            InducedDemandInitialTolerance = 6;
+            InducedDemandQueueSizePerSpot = 3;
+            RerouteDistanceEnable = true;
+            RerouteDistance = 12;
+            GarageSpotsMultiplier = 20;
         }
     }
 
@@ -59,13 +75,26 @@ namespace RealisticParking
             return new Dictionary<string, string>
             {
                 { m_Setting.GetSettingsLocaleID(), "RealisticParking" },
-                { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Main" },
+                { m_Setting.GetOptionTabLocaleID(Setting.kSection), "Settings" },
 
-                { m_Setting.GetOptionGroupLocaleID(Setting.kDescGroup), "Description" },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kSettingsGroup), "Settings" },
 
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RerouteDistance)), "Reroute Distance" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kInducedDemandGroup), "Induced Demand" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandEnable)), "Enable Reroute Distance Change Change" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Induced Demand Initial Tolerance" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Induced Demand Queue Size per Parking Spot" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Induced Demand Cooldown Length" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), "Number of nodes away for the car to reroute based on parking availability" },
+
+                { m_Setting.GetOptionGroupLocaleID(Setting.kRerouteDistanceGroup), "Reroute Distance" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RerouteDistanceEnable)), "Enable Reroute Distance Change Change" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RerouteDistance)), "Reroute Node Distance" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RerouteDistance)), "Number of nodes away for the car to reroute based on parking availability" },
+
+                { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Garage Spots" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsMultiplier)), "Garage Spots Multiplier" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsMultiplier)), "Number of nodes away for the car to reroute based on parking availability" },
             };
         }
 

@@ -25,6 +25,9 @@ namespace RealisticParking
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
         private int garageSpotsMultiplier;
+        private bool enableDemandSystem;
+        private int demandTolerance;
+        private int demandSizePerSpot;
 
         protected override void OnCreate()
         {
@@ -122,9 +125,11 @@ namespace RealisticParking
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
             updateLaneJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            updateLaneJob.frameIndex = simulationSystem.frameIndex;
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+            updateLaneJob.enableDemandSystem = this.enableDemandSystem;
+            updateLaneJob.demandTolerance = this.demandTolerance;
+            updateLaneJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
             base.Dependency = jobHandle;
@@ -133,6 +138,9 @@ namespace RealisticParking
         private void UpdateSettings(Setting settings)
         {
             this.garageSpotsMultiplier = settings.GarageSpotsMultiplier;
+            this.enableDemandSystem = settings.InducedDemandEnable;
+            this.demandTolerance = settings.InducedDemandInitialTolerance;
+            this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
         }
     }
 }

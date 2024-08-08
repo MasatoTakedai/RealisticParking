@@ -28,17 +28,21 @@ namespace RealisticParking
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
-        public float frameIndex;
+        [ReadOnly] public bool enableDemandSystem;
+        [ReadOnly] public int demandTolerance;
+        [ReadOnly] public float demandSizePerSpot;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
             float newFreeSpace = freeSpace;
-            if (parkingDemand.TryGetComponent(entity, out ParkingDemand limit))
+            if (enableDemandSystem && parkingDemand.TryGetComponent(entity, out ParkingDemand limit))
             {
-                if (limit.demand > 6)
-                    newFreeSpace -= math.min(freeSpace - 0.01f, math.ceil((limit.demand - 6) / 3) * 6);
+                // set new free space value
+                if (limit.demand > demandTolerance)
+                    newFreeSpace -= math.min(freeSpace - 0.01f, math.floor((limit.demand - demandTolerance) / demandSizePerSpot) * 6);
 
+                // remove parking demand component if no viable spots left
                 if (freeSpace < 2)
                 {
                     newFreeSpace = freeSpace;

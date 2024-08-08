@@ -75,6 +75,9 @@ namespace RealisticParking
 
         private PersonalCarAISystem personalCarAISystem;
         private PersonalCarAISystem.Actions personalCarAIActions;
+        private bool enableDemandSystem;
+        private bool enableRerouteLimit;
+        private int rerouteLimit;
 
         private EndFrameBarrier m_EndFrameBarrier;
 
@@ -105,6 +108,15 @@ namespace RealisticParking
             personalCarAISystem.Enabled = false;
             personalCarAIActions = base.World.GetOrCreateSystemManaged<PersonalCarAISystem.Actions>();
             personalCarAIActions.Enabled = false;
+
+            Mod.INSTANCE.settings.onSettingsApplied += settings =>
+            {
+                if (settings.GetType() == typeof(Setting))
+                {
+                    this.UpdateSettings((Setting)settings);
+                }
+            };
+            this.UpdateSettings(Mod.INSTANCE.settings);
 
             m_EndFrameBarrier = base.World.GetOrCreateSystemManaged<EndFrameBarrier>();
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
@@ -194,7 +206,9 @@ namespace RealisticParking
             jobData.m_StatisticsEventQueue = m_CityStatisticsSystem.GetStatisticsEventQueue(out var deps).AsParallelWriter();
             jobData.m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out var deps2).AsParallelWriter();
             jobData.parkingTargetLookup = SystemAPI.GetComponentLookup<ParkingTarget>(isReadOnly: true);
-            jobData.rerouteLimit = Mod.INSTANCE.settings.RerouteDistance;
+            jobData.enableRerouteLimit = this.enableRerouteLimit;
+            jobData.rerouteLimit = this.rerouteLimit;
+            jobData.enableDemandSystem = this.enableDemandSystem;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(jobData, m_VehicleQuery, JobHandle.CombineDependencies(base.Dependency, deps, deps2));
             m_PathfindSetupSystem.AddQueueWriter(jobHandle);
             m_EndFrameBarrier.AddJobHandleForProducer(jobHandle);
@@ -203,5 +217,13 @@ namespace RealisticParking
             m_Actions.m_Dependency = jobHandle;
             base.Dependency = jobHandle;
         }
+
+        private void UpdateSettings(Setting settings)
+        {
+            this.enableDemandSystem = settings.InducedDemandEnable;
+            this.enableRerouteLimit = settings.RerouteDistanceEnable;
+            this.rerouteLimit = settings.RerouteDistance;
+        }
+
     }
 }

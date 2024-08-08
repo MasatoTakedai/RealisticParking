@@ -23,13 +23,17 @@ namespace RealisticParking
     public struct PersonalCarTickJob : IJobChunk
     {
         // custom code start
-        [ReadOnly]
-        public ComponentLookup<ParkingTarget> parkingTargetLookup;
+        [ReadOnly] public ComponentLookup<ParkingTarget> parkingTargetLookup;
+        [ReadOnly] public bool enableDemandSystem;
+        [ReadOnly] public bool enableRerouteLimit;
+        [ReadOnly] public int rerouteLimit;
 
-        public int rerouteLimit;
-
+        // add custom ParkingTarget and CarQueued components with a new destination
         private void SetCustomParkingComponents(Entity entity, int jobIndex, PathElement pathElement)
         {
+            if (!enableDemandSystem)
+                return;
+            
             if (!parkingTargetLookup.HasComponent(entity))
                 m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
 
@@ -37,7 +41,13 @@ namespace RealisticParking
             m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
         }
 
-        private int GetRerouteLimit() { return rerouteLimit; }
+        private int GetRerouteLimit() 
+        {
+            if (enableRerouteLimit)
+                return rerouteLimit;
+            else
+                return 4000;
+        }
 
         // custom code end
 

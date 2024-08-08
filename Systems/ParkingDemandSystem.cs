@@ -3,7 +3,6 @@ using Game.Common;
 using Game.Net;
 using Game.Tools;
 using Unity.Entities;
-
 using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Jobs;
@@ -18,7 +17,10 @@ namespace RealisticParking
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
         [ReadOnly] public uint frameIndex;
+        [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public uint cooldownLength;
+        [ReadOnly] public int demandTolerance;
+        [ReadOnly] public float demandSizePerSpot;
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
         {
@@ -26,14 +28,30 @@ namespace RealisticParking
             for (int i = 0; i < entities.Length; i++)
             {
                 Entity entity = entities[i];
+
+                // remove components if disabling system
+                if (!enableDemandSystem)
+                {
+                    if (parkingDemand.HasComponent(entity))
+                    {
+                        commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                        commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
+                    }
+                    if (carQueuedLookup.HasComponent(entity))
+                        commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
+
+                    continue;
+                }
+
                 if (carQueuedLookup.HasComponent(entity))
                 {
+                    // add to parking demand data and add flag to update pathfinding if needed
                     if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData))
                     {
                         short newDemand = (short)(demandData.demand + 1);
                         commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex + cooldownLength));
 
-                        if (newDemand > 6 && newDemand % 3 == 0)
+                        if (newDemand > demandTolerance && newDemand % demandSizePerSpot == 0)
                         {
                             commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                         }
@@ -47,6 +65,7 @@ namespace RealisticParking
                     commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
 
                 }
+                // remove demand component if cooldown reached
                 else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownIndex)
                 {
                     commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
@@ -60,7 +79,10 @@ namespace RealisticParking
     {
         private EntityCommandBufferSystem entityCommandBufferSystem;
         private SimulationSystem simulationSystem;
+        private bool enableDemandSystem;
         private uint cooldownLength;
+        private int demandTolerance;
+        private int demandSizePerSpot;
         EntityQuery updatedParkingQuery;
 
         protected override void OnCreate()
@@ -118,14 +140,20 @@ namespace RealisticParking
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             parkingDemandJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             parkingDemandJob.frameIndex = simulationSystem.frameIndex;
+            parkingDemandJob.enableDemandSystem = this.enableDemandSystem;
             parkingDemandJob.cooldownLength = this.cooldownLength;
+            parkingDemandJob.demandTolerance = this.demandTolerance;
+            parkingDemandJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(parkingDemandJob, updatedParkingQuery, base.Dependency);
             base.Dependency = jobHandle;
         }
 
         private void UpdateSettings(Setting settings)
         {
-            this.cooldownLength = settings.ParkingDemandCooldown;
+            this.enableDemandSystem = settings.InducedDemandEnable;
+            this.cooldownLength = (uint)settings.InducedDemandCooldown;
+            this.demandTolerance = settings.InducedDemandInitialTolerance;
+            this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
         }
     }
 }
