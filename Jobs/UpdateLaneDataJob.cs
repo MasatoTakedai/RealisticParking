@@ -30,22 +30,28 @@ namespace RealisticParking
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public int demandTolerance;
-        [ReadOnly] public float demandSizePerSpot;
+        [ReadOnly] public int demandSizePerSpot;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
-            float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-            float newFreeSpace = freeSpace;
-            if (enableDemandSystem && parkingDemand.TryGetComponent(entity, out ParkingDemand limit))
+            float calcFreeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+            float newFreeSpace = calcFreeSpace;
+            if (enableDemandSystem && parkingDemand.TryGetComponent(entity, out ParkingDemand demandData))
             {
-                // set new free space value
-                if (limit.demand > demandTolerance)
-                    newFreeSpace -= math.min(freeSpace - 0.01f, math.floor((limit.demand - demandTolerance) / demandSizePerSpot) * 6);
+                // set to have no free space if the demand is high enough
+                int spotsFree = 0;
+                if (parkingLaneData.m_SlotInterval != 0)
+                    spotsFree = (int)math.floor((curve.m_Length + 0.01f) / parkingLaneData.m_SlotInterval) - laneObjects.Length;
+                else
+                    spotsFree = (int)math.ceil(calcFreeSpace / 6);
+                int supplyLeft = demandTolerance + spotsFree * demandSizePerSpot - demandData.demand;
+                if (supplyLeft <= 0)
+                    newFreeSpace = 0.01f;
 
                 // remove parking demand component if no viable spots left
-                if (freeSpace < 2)
+                if (calcFreeSpace < 2)
                 {
-                    newFreeSpace = freeSpace;
+                    newFreeSpace = calcFreeSpace;
                     commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                 }
             }

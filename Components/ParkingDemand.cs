@@ -7,24 +7,24 @@ namespace RealisticParking
     public struct ParkingDemand : IComponentData, IQueryTypeParameter, ISerializable
     {
         public short demand;
-        public uint cooldownIndex;
+        public uint cooldownStartIndex;
 
         public ParkingDemand(short limitValue, uint cooldownIndex) 
         { 
             this.demand = limitValue; 
-            this.cooldownIndex = cooldownIndex;
+            this.cooldownStartIndex = cooldownIndex;
         }
 
         public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
         {
             writer.Write(demand);
-            writer.Write(cooldownIndex);
+            writer.Write(cooldownStartIndex);
         }
 
         public void Deserialize<TReader>(TReader reader) where TReader : IReader
         {
             reader.Read(out demand);
-            reader.Read(out cooldownIndex);
+            reader.Read(out cooldownStartIndex);
         }
     }
 }

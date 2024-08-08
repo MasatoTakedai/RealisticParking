@@ -49,7 +49,7 @@ namespace RealisticParking
                     if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData))
                     {
                         short newDemand = (short)(demandData.demand + 1);
-                        commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex + cooldownLength));
+                        commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex));
 
                         if (newDemand > demandTolerance && newDemand % demandSizePerSpot == 0)
                         {
@@ -66,7 +66,7 @@ namespace RealisticParking
 
                 }
                 // remove demand component if cooldown reached
-                else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownIndex)
+                else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownStartIndex + cooldownLength)
                 {
                     commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                     commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
