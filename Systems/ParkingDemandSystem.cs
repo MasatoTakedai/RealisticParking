@@ -35,6 +35,7 @@ namespace RealisticParking
                     if (parkingDemand.HasComponent(entity))
                     {
                         commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                        commandBuffer.RemoveComponent<GarageCount>(unfilteredChunkIndex, entity);
                         commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                     }
                     if (carQueuedLookup.HasComponent(entity))
