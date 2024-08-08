@@ -51,7 +51,7 @@ namespace RealisticParking
                         short newDemand = (short)(demandData.demand + 1);
                         commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex));
 
-                        if (newDemand > demandTolerance && newDemand % demandSizePerSpot == 0)
+                        if (newDemand > demandTolerance && (newDemand - demandTolerance) % demandSizePerSpot == 0)
                         {
                             commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                         }
