@@ -26,6 +26,8 @@ namespace RealisticParking
         [ReadOnly]
         public ComponentLookup<ParkingTarget> parkingTargetLookup;
 
+        public int rerouteLimit;
+
         private void SetCustomParkingComponents(Entity entity, int jobIndex, PathElement pathElement)
         {
             if (parkingTargetLookup.HasComponent(entity))
@@ -40,6 +42,9 @@ namespace RealisticParking
             m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
             m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, pathElement.m_Target);
         }
+
+        private int GetRerouteLimit() { return rerouteLimit; }
+
         // custom code end
 
 
@@ -339,7 +344,7 @@ namespace RealisticParking
         private void CheckParkingSpace(Entity entity, ref Random random, ref CarCurrentLane currentLane, ref PathOwner pathOwner, DynamicBuffer<CarNavigationLane> navigationLanes)
         {
             DynamicBuffer<PathElement> path = m_PathElements[entity];
-            for (int i = 0; i < navigationLanes.Length; i++)
+            for (int i = 0; i < math.min(GetRerouteLimit(), navigationLanes.Length); i++)
             {
                 CarNavigationLane value = navigationLanes[i];
                 if ((value.m_Flags & Game.Vehicles.CarLaneFlags.ParkingSpace) == 0)
@@ -412,7 +417,7 @@ namespace RealisticParking
                 }
                 return;
             }
-            int num = math.min(40000, path.Length - pathOwner.m_ElementIndex);
+            int num = math.min(GetRerouteLimit() - navigationLanes.Length, path.Length - pathOwner.m_ElementIndex);
             if (num <= 0 || navigationLanes.Length <= 0)
             {
                 return;

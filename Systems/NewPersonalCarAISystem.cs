@@ -197,6 +197,7 @@ namespace RealisticParking
             jobData.m_StatisticsEventQueue = m_CityStatisticsSystem.GetStatisticsEventQueue(out var deps).AsParallelWriter();
             jobData.m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out var deps2).AsParallelWriter();
             jobData.parkingTargetLookup = SystemAPI.GetComponentLookup<ParkingTarget>(isReadOnly: true);
+            jobData.rerouteLimit = Mod.INSTANCE.settings.RerouteDistance;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(jobData, m_VehicleQuery, JobHandle.CombineDependencies(base.Dependency, deps, deps2));
             m_PathfindSetupSystem.AddQueueWriter(jobHandle);
             m_EndFrameBarrier.AddJobHandleForProducer(jobHandle);

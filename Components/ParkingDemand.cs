@@ -4,20 +4,20 @@ using Unity.Entities;
 
 namespace RealisticParking
 {
-    public struct ParkingPathfindLimit : IComponentData, IQueryTypeParameter, ISerializable
+    public struct ParkingDemand : IComponentData, IQueryTypeParameter, ISerializable
     {
-        public short limitValue;
+        public short demand;
 
-        public ParkingPathfindLimit(short limitValue) { this.limitValue = limitValue; }
+        public ParkingDemand(short limitValue) { this.demand = limitValue; }
 
         public void Serialize<TWriter>(TWriter writer) where TWriter : IWriter
         {
-            writer.Write(limitValue);
+            writer.Write(demand);
         }
 
         public void Deserialize<TReader>(TReader reader) where TReader : IReader
         {
-            reader.Read(out limitValue);
+            reader.Read(out demand);
         }
     }
 }

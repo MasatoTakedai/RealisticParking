@@ -28,22 +28,22 @@ namespace RealisticParking
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         public ComponentLookup<CarQueued> carQueuedLookup;
         public ComponentLookup<CarRerouted> carReroutedLookup;
-        public ComponentLookup<ParkingPathfindLimit> parkingPathfindLimitLookup;
+        public ComponentLookup<ParkingDemand> parkingPathfindLimitLookup;
         public float frameIndex;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
             float newFreeSpace = freeSpace;
-            if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
+            if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
             {
-                if (limit.limitValue > 6)
-                    newFreeSpace -= math.min(freeSpace - 0.1f, math.floor((limit.limitValue - 6) / 2) * 6);
+                if (limit.demand > 6)
+                    newFreeSpace -= math.min(freeSpace - 0.1f, math.floor((limit.demand - 6) / 2) * 6);
 
                 if (freeSpace < 2)
                 {
                     newFreeSpace = freeSpace;
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
                 }
             }
             return newFreeSpace;
@@ -54,28 +54,28 @@ namespace RealisticParking
         private void ProcessQueuedCars(Entity entity, int unfilteredChunkIndex)
         {
             if (carQueuedLookup.HasComponent(entity)) {
-                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
+                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
                 {
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit((short)(limit.limitValue + 1)));
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand((short)(limit.demand + 1)));
                 }
                 else
                 {
-                    commandBuffer.AddComponent<ParkingPathfindLimit>(unfilteredChunkIndex, entity);
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(1));
+                    commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(1));
                 }
                 commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
             }
 
             if (carReroutedLookup.HasComponent(entity))
             {
-                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingPathfindLimit limit))
+                if (parkingPathfindLimitLookup.TryGetComponent(entity, out ParkingDemand limit))
                 {
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
                 }
                 else
                 {
-                    commandBuffer.AddComponent<ParkingPathfindLimit>(unfilteredChunkIndex, entity);
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingPathfindLimit(0));
+                    commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
                 }
                 commandBuffer.RemoveComponent<CarRerouted>(unfilteredChunkIndex, entity);
             }
