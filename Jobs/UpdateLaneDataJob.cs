@@ -16,7 +16,6 @@ using Game.Prefabs;
 using Game.Vehicles;
 using Unity.Collections;
 using UnityEngine;
-using static Colossal.IO.AssetDatabase.AtlasFrame;
 
 namespace RealisticParking
 {
