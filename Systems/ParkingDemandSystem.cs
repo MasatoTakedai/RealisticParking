@@ -60,6 +60,11 @@ namespace RealisticParking
                     {
                         commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                         commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(1, frameIndex));
+
+                        if (demandTolerance == 0)
+                        {
+                            commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
+                        }
                     }
 
                     commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
