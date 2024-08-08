@@ -30,11 +30,7 @@ namespace RealisticParking
 
         private void SetCustomParkingComponents(Entity entity, int jobIndex, PathElement pathElement)
         {
-            if (parkingTargetLookup.HasComponent(entity))
-            {
-                m_CommandBuffer.AddComponent<CarDequeued>(jobIndex, parkingTargetLookup[entity].target);
-            }
-            else
+            if (!parkingTargetLookup.HasComponent(entity))
                 m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
 
             m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));

@@ -43,7 +43,7 @@ namespace RealisticParking
                 if (freeSpace < 2)
                 {
                     newFreeSpace = freeSpace;
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(0));
+                    commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                 }
             }
             return newFreeSpace;

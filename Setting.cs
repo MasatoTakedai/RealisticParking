@@ -26,6 +26,10 @@ namespace RealisticParking
         [SettingsUISection(kSection, kSettingsGroup)]
         public bool Enable { get; set; }
 
+        [SettingsUISlider(min = 500, max = 3000, step = 1)]
+        [SettingsUISection(kSection, kSettingsGroup)]
+        public uint ParkingDemandCooldown { get; set; }
+
         [SettingsUISlider(min = 1, max = 20, step = 1)]
         [SettingsUISection(kSection, kSettingsGroup)]
         public int RerouteDistance { get; set; }
