@@ -70,10 +70,11 @@ namespace RealisticParking
                     commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
 
                 }
-                // remove demand component if cooldown reached
+                // remove demand and garage count component if cooldown reached
                 else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownStartIndex + cooldownLength)
                 {
                     commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                    commandBuffer.RemoveComponent<GarageCount>(unfilteredChunkIndex, entity);
                     commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                 }
             }

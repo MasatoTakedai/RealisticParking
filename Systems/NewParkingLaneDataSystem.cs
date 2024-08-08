@@ -123,8 +123,9 @@ namespace RealisticParking
             updateLaneJob.m_City = m_CitySystem.City;
             updateLaneJob.m_MovingObjectSearchTree = m_ObjectSearchSystem.GetMovingSearchTree(readOnly: true, out var dependencies);
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
-            updateLaneJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
+            updateLaneJob.parkingDemandLookup = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
+            updateLaneJob.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
             updateLaneJob.enableDemandSystem = this.enableDemandSystem;

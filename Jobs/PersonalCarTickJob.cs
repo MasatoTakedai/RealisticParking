@@ -24,6 +24,7 @@ namespace RealisticParking
     {
         // custom code start
         [ReadOnly] public ComponentLookup<ParkingTarget> parkingTargetLookup;
+        [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;   
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public bool enableRerouteLimit;
         [ReadOnly] public int rerouteLimit;
@@ -49,6 +50,13 @@ namespace RealisticParking
                 return 4000;
         }
 
+        private int GetActualGarageCount(Entity entity, GarageLane garageLane)
+        {
+            if (garageCountLookup.TryGetComponent(entity, out GarageCount customCount))
+                return customCount.actualCount;
+            else
+                return garageLane.m_VehicleCount;
+        }
         // custom code end
 
 
@@ -398,7 +406,7 @@ namespace RealisticParking
                 {
                     GarageLane garageLane = m_GarageLaneData[value.m_Lane];
                     Game.Net.ConnectionLane connectionLane = m_ConnectionLaneData[value.m_Lane];
-                    if (garageLane.m_VehicleCount < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
+                    if (GetActualGarageCount(value.m_Lane, garageLane) < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
                     {
                         if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) == 0)
                         {
@@ -456,7 +464,7 @@ namespace RealisticParking
                 }
                 GarageLane garageLane2 = m_GarageLaneData[pathElement.m_Target];
                 Game.Net.ConnectionLane connectionLane2 = m_ConnectionLaneData[pathElement.m_Target];
-                if (garageLane2.m_VehicleCount < garageLane2.m_VehicleCapacity && (connectionLane2.m_Flags & ConnectionLaneFlags.Disabled) == 0)
+                if (GetActualGarageCount(pathElement.m_Target, garageLane2) < garageLane2.m_VehicleCapacity && (connectionLane2.m_Flags & ConnectionLaneFlags.Disabled) == 0)
                 {
                     return;
                 }
