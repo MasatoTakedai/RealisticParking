@@ -122,7 +122,6 @@ namespace RealisticParking
             updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
             updateLaneJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            updateLaneJob.carDequeuedLookup = SystemAPI.GetComponentLookup<CarDequeued>(isReadOnly: true);
             updateLaneJob.frameIndex = simulationSystem.frameIndex;
             EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
             updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();

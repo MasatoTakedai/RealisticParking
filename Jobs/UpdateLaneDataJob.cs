@@ -27,7 +27,6 @@ namespace RealisticParking
         public int garageSpotsMultiplier;
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
-        [ReadOnly] public ComponentLookup<CarDequeued> carDequeuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
         public float frameIndex;
 
