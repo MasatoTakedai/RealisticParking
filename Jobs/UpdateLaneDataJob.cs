@@ -63,7 +63,7 @@ namespace RealisticParking
 
         private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
 
-        private ushort CustomCountGarageVehicles(Entity entity, int unfilteredChunkIndex, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
+        private ushort CustomCountGarageVehicles(Entity entity, int unfilteredChunkIndex, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
             ushort vanillaCount = CountVehicles(entity, owner, curve, connectionLane);
             ushort customCount = vanillaCount;
@@ -76,7 +76,7 @@ namespace RealisticParking
                 commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
             commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));
 
-            return customCount;
+            return (ushort)math.max(math.min((uint)customCount, garageLane.m_VehicleCapacity), vanillaCount);
         }
         // custom code end
 
@@ -256,7 +256,7 @@ namespace RealisticParking
                 Game.Net.ConnectionLane connectionLane = nativeArray8[j];
                 connectionLane.m_Flags &= ~(ConnectionLaneFlags.Disabled | ConnectionLaneFlags.AllowEnter | ConnectionLaneFlags.AllowExit);
                 GetParkingStats(owner2, default(Game.Net.ParkingLane), out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
-                value2.m_VehicleCount = CustomCountGarageVehicles(entity, unfilteredChunkIndex, owner2, curve2, connectionLane);
+                value2.m_VehicleCount = CustomCountGarageVehicles(entity, unfilteredChunkIndex, value2, owner2, curve2, connectionLane);
                 if (disabled2)
                 {
                     connectionLane.m_Flags |= ConnectionLaneFlags.Disabled;
