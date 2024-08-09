@@ -16,6 +16,7 @@ using Game.Buildings;
 using Game.City;
 using Game.Objects;
 using Game.Pathfind;
+using Game.Companies;
 
 namespace RealisticParking
 {
@@ -27,7 +28,8 @@ namespace RealisticParking
         private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
-        private int garageSpotsMultiplier;
+        private float garageSpotsPerResProp;
+        private float garageSpotsPerWorker;
         private bool enableDemandSystem;
         private int demandTolerance;
         private float demandSizePerSpot;
@@ -125,7 +127,10 @@ namespace RealisticParking
             updateLaneJob.m_ActivityLocations = SystemAPI.GetBufferLookup<ActivityLocationElement>(isReadOnly: true);
             updateLaneJob.m_City = m_CitySystem.City;
             updateLaneJob.m_MovingObjectSearchTree = m_ObjectSearchSystem.GetMovingSearchTree(readOnly: true, out var dependencies);
-            updateLaneJob.garageSpotsMultiplier = garageSpotsMultiplier;
+            updateLaneJob.garageSpotsPerResident = garageSpotsPerResProp;
+            updateLaneJob.garageSpotsPerWorker = garageSpotsPerWorker;
+            updateLaneJob.renterLookup = SystemAPI.GetBufferLookup<Renter>(isReadOnly: true);
+            updateLaneJob.workProviderLookup = SystemAPI.GetComponentLookup<WorkProvider>(isReadOnly: true);
             updateLaneJob.parkingDemandLookup = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
             updateLaneJob.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
@@ -141,7 +146,8 @@ namespace RealisticParking
 
         private void UpdateSettings(Setting settings)
         {
-            this.garageSpotsMultiplier = settings.GarageSpotsMultiplier;
+            this.garageSpotsPerResProp = settings.GarageSpotsPerResProp;
+            this.garageSpotsPerWorker = settings.GarageSpotsPerWorker;
             this.enableDemandSystem = settings.EnableInducedDemand;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;

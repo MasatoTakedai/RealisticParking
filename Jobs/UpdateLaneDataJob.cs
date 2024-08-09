@@ -19,6 +19,7 @@ using Game.Prefabs;
 using Game.Vehicles;
 using Unity.Collections;
 using UnityEngine;
+using Game.Companies;
 
 namespace RealisticParking
 {
@@ -26,14 +27,17 @@ namespace RealisticParking
     public struct UpdateLaneDataJob : IJobChunk
     {
         // custom code start
-        public int garageSpotsMultiplier;
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemandLookup;
         [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;
+        [ReadOnly] public BufferLookup<Renter> renterLookup;
+        [ReadOnly] public ComponentLookup<WorkProvider> workProviderLookup;
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public int demandTolerance;
         [ReadOnly] public float demandSizePerSpot;
+        [ReadOnly] public float garageSpotsPerResident;
+        [ReadOnly] public float garageSpotsPerWorker;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
@@ -61,7 +65,21 @@ namespace RealisticParking
             return customFreeSpace;
         }
 
-        private int ApplyCustomGarageCapacity(int vanillaCapacity) { return garageSpotsMultiplier * vanillaCapacity; }
+        private int ApplyCustomGarageCapacity(Entity buildingEntity, BuildingPropertyData buildingData) {
+            int capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerResident);
+            if ((buildingData.CountProperties(Game.Zones.AreaType.Commercial) > 0 || buildingData.CountProperties(Game.Zones.AreaType.Industrial) > 0)
+                && renterLookup.TryGetBuffer(buildingEntity, out DynamicBuffer<Renter> renters))
+            {
+                for (int i = 0; i < renters.Length; i++)
+                {
+                    if (workProviderLookup.TryGetComponent(renters[i], out var workProvider))
+                    {
+                        capacity += (int)(workProvider.m_MaxWorkers * garageSpotsPerWorker);
+                    }
+                }
+            }
+            return capacity;
+        }
 
         private ushort CustomCountGarageVehicles(Entity entity, int unfilteredChunkIndex, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
@@ -369,7 +387,7 @@ namespace RealisticParking
                     WorkplaceData componentData8;
                     if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef.m_Prefab, out var componentData7))
                     {
-                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(Mathf.RoundToInt(componentData7.m_SpaceMultiplier)));
+                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(entity, componentData7));
                     }
                     else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef.m_Prefab, out componentData8))
                     {

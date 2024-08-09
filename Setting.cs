@@ -32,7 +32,7 @@ namespace RealisticParking
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public int InducedDemandInitialTolerance { get; set; }
 
-        [SettingsUISlider(min = 1.0f, max = 10.0f, step = 0.2f, unit = "floatSingleFraction")]
+        [SettingsUISlider(min = 1.0f, max = 10.0f, step = 0.25f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, InducedDemandGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public float InducedDemandQueueSizePerSpot { get; set; }
@@ -53,9 +53,13 @@ namespace RealisticParking
         public int RerouteDistance { get; set; }
 
 
-        [SettingsUISlider(min = 1, max = 40, step = 1)]
+        [SettingsUISlider(min = 0f, max = 4f, step = 0.25f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, kGarageSpotsGroup)]
-        public int GarageSpotsMultiplier { get; set; }
+        public float GarageSpotsPerResProp { get; set; }
+
+        [SettingsUISlider(min = 0f, max = 1f, step = 0.1f, unit = "floatSingleFraction")]
+        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        public float GarageSpotsPerWorker { get; set; }
 
 
         public override void SetDefaults()
@@ -66,7 +70,8 @@ namespace RealisticParking
             InducedDemandQueueSizePerSpot = 1.5f;
             EnableRerouteDistance = true;
             RerouteDistance = 12;
-            GarageSpotsMultiplier = 20;
+            GarageSpotsPerResProp = 1.2f;
+            GarageSpotsPerWorker = 0.3f;
         }
     }
 
@@ -119,10 +124,14 @@ namespace RealisticParking
                     "Number of nodes away for cars to reroute based on parking availability. For reference, the vanilla value is 4000." 
                 },
                 { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Garage Spots" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsMultiplier)), "Garage Spots Multiplier" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsMultiplier)), 
-                    "Multiplier for the vanilla amount of garage spots in buildings. For reference, vanilla mid and high-rise apartments only have max 3 spots and " +
-                    "high-rise offices have 30 spots. Non-RICO buildings are not affected. It also does not add garages to buildings without them in the asset." },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerResProp)), "Garage Spots per Household" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerResProp)), 
+                    "The number of garage spots per household in the apartment. Apartments with no garage in the asset are not affected." 
+                },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerWorker)), "Garage Spots per Worker" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerWorker)),
+                    "The number of garage spots per worker in the property. Non-RICO buildings are not affected. Properties with no garage in the asset are not affected."
+                },
             };
         }
 
