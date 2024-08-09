@@ -225,8 +225,8 @@ namespace RealisticParking
 
         private void UpdateSettings(Setting settings)
         {
-            this.enableDemandSystem = settings.InducedDemandEnable;
-            this.enableRerouteLimit = settings.RerouteDistanceEnable;
+            this.enableDemandSystem = settings.EnableInducedDemand;
+            this.enableRerouteLimit = settings.EnableRerouteDistance;
             this.rerouteLimit = settings.RerouteDistance;
         }
 

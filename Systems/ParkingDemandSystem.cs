@@ -161,7 +161,7 @@ namespace RealisticParking
 
         private void UpdateSettings(Setting settings)
         {
-            this.enableDemandSystem = settings.InducedDemandEnable;
+            this.enableDemandSystem = settings.EnableInducedDemand;
             this.cooldownLength = (uint)settings.InducedDemandCooldown;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;

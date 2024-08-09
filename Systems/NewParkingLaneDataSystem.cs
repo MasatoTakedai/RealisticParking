@@ -142,7 +142,7 @@ namespace RealisticParking
         private void UpdateSettings(Setting settings)
         {
             this.garageSpotsMultiplier = settings.GarageSpotsMultiplier;
-            this.enableDemandSystem = settings.InducedDemandEnable;
+            this.enableDemandSystem = settings.EnableInducedDemand;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
         }
