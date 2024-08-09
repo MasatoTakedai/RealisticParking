@@ -27,20 +27,20 @@ namespace RealisticParking
         public bool EnableInducedDemand { get; set; }
         private bool hideInducedDemand() => !EnableInducedDemand;
 
-        [SettingsUISlider(min = 3000, max = 10000, step = 1)]
-        [SettingsUISection(MainTab, InducedDemandGroup)]
-        [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
-        public int InducedDemandCooldown { get; set; }
-
         [SettingsUISlider(min = 0, max = 20, step = 1)]
         [SettingsUISection(MainTab, InducedDemandGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public int InducedDemandInitialTolerance { get; set; }
 
-        [SettingsUISlider(min = 1, max = 10, step = 0.5f)]
+        [SettingsUISlider(min = 1.0f, max = 10.0f, step = 0.2f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, InducedDemandGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public float InducedDemandQueueSizePerSpot { get; set; }
+
+        [SettingsUISlider(min = 3000, max = 10000, step = 1)]
+        [SettingsUISection(MainTab, InducedDemandGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
+        public int InducedDemandCooldown { get; set; }
 
 
         [SettingsUISection(MainTab, RerouteDistanceGroup)]
@@ -87,23 +87,42 @@ namespace RealisticParking
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.InducedDemandGroup), "Induced Demand" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableInducedDemand)), "Enable Parking Induced Demand" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableInducedDemand)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableInducedDemand)),
+                    "Enable induced demand system for parking spots. This system counts every time a car pathfinds to a parking lane, and once enough cars have routed to it, " +
+                    "it will disable that spot for future pathfinding. The system resets once the spot is full or enough time passes." 
+                },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Induced Demand Initial Tolerance" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandInitialTolerance)), 
+                    "The number of cars for parking lanes to initially let pathfind in without considering the queue size per spot. For example, if there are 2 spots open and " +
+                    "this is set to 5 and the queue size per spot to 1, the parking spot will be disabled after 7 cars have pathfinded to that spot. If this setting is set " +
+                    "to a low number with limited parking spots in the city, it may result in a low number of cars driving around." 
+                },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Induced Demand Queue Size per Parking Spot" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Number of nodes away for the car to reroute based on parking availability" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Induced Demand Cooldown Length" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), 
+                    "The number of cars to be allowed to pathfind to each available parking spot. Decimal values are allowed." 
+                },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Induced Demand Reset Length" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), 
+                    "The number of simulation frames after the most recent pathfind for the demand to reset to 0. For reference, one in-game minute is approximately equal to " +
+                    "182 frames." 
+                },
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.RerouteDistanceGroup), "Reroute Distance" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableRerouteDistance)), "Enable Reroute Distance Change Change" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableRerouteDistance)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableRerouteDistance)), "Enable Reroute Distance Change" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableRerouteDistance)), 
+                    "Enable reroute distance change for car navigation. In the vanilla system, a car can sense that the parking spot they are navigating to is full up to 4000 " +
+                    "nodes away. This causes random u-turns on main roads, as they will suddenly change parking destinations while driving. This system aims to get rid of that " +
+                    "by only letting the car sense that the parking is unavailable from a closer distance." 
+                },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RerouteDistance)), "Reroute Node Distance" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.RerouteDistance)), "Number of nodes away for the car to reroute based on parking availability" },
-
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.RerouteDistance)), 
+                    "Number of nodes away for cars to reroute based on parking availability. For reference, the vanilla value is 4000." 
+                },
                 { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Garage Spots" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsMultiplier)), "Garage Spots Multiplier" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsMultiplier)), "Number of nodes away for the car to reroute based on parking availability" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsMultiplier)), 
+                    "Multiplier for the vanilla amount of garage spots in buildings. For reference, vanilla mid and high-rise apartments only have max 3 spots and " +
+                    "high-rise offices have 30 spots. Non-RICO buildings are not affected. It also does not add garages to buildings without them in the asset." },
             };
         }
 
