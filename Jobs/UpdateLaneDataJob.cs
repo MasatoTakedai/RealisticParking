@@ -33,7 +33,7 @@ namespace RealisticParking
         [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public int demandTolerance;
-        [ReadOnly] public int demandSizePerSpot;
+        [ReadOnly] public float demandSizePerSpot;
 
         private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
@@ -47,7 +47,7 @@ namespace RealisticParking
                     spotsFree = (int)math.floor((curve.m_Length + 0.01f) / parkingLaneData.m_SlotInterval) - laneObjects.Length;
                 else
                     spotsFree = (int)math.ceil(vanillaFreeSpace / 6);
-                int supplyLeft = demandTolerance + spotsFree * demandSizePerSpot - demandData.demand;
+                int supplyLeft = demandTolerance + (int)(spotsFree * demandSizePerSpot) - demandData.demand;
                 if (supplyLeft <= 0)
                     customFreeSpace = 0.01f;
 

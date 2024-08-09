@@ -30,7 +30,7 @@ namespace RealisticParking
         private int garageSpotsMultiplier;
         private bool enableDemandSystem;
         private int demandTolerance;
-        private int demandSizePerSpot;
+        private float demandSizePerSpot;
 
         protected override void OnCreate()
         {

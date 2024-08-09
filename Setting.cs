@@ -33,9 +33,9 @@ namespace RealisticParking
         [SettingsUISection(kSection, kInducedDemandGroup)]
         public int InducedDemandInitialTolerance { get; set; }
 
-        [SettingsUISlider(min = 1, max = 10, step = 1)]
+        [SettingsUISlider(min = 1, max = 10, step = 0.5f)]
         [SettingsUISection(kSection, kInducedDemandGroup)]
-        public int InducedDemandQueueSizePerSpot { get; set; }
+        public float InducedDemandQueueSizePerSpot { get; set; }
 
 
         [SettingsUISection(kSection, kRerouteDistanceGroup)]

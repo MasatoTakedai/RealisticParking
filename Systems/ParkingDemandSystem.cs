@@ -51,12 +51,12 @@ namespace RealisticParking
                 // if a new car is queued add to parking demand data and add flag to update pathfinding if needed
                 if (carQueuedLookup.HasComponent(entity))
                 {
-                    if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData))
+                    if (parkingDemand.TryGetComponent(entity, out ParkingDemand oldDemand))
                     {
-                        short newDemand = (short)(demandData.demand + 1);
+                        short newDemand = (short)(oldDemand.demand + 1);
                         commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex));
 
-                        if (newDemand > demandTolerance && (newDemand - demandTolerance) % demandSizePerSpot == 0)
+                        if (newDemand > demandTolerance && (oldDemand.demand - demandTolerance) % demandSizePerSpot >= (newDemand - demandTolerance) % demandSizePerSpot)
                         {
                             commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                         }
@@ -93,7 +93,7 @@ namespace RealisticParking
         private bool enableDemandSystem;
         private uint cooldownLength;
         private int demandTolerance;
-        private int demandSizePerSpot;
+        private float demandSizePerSpot;
         EntityQuery updatedParkingQuery;
 
         protected override void OnCreate()
