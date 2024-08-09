@@ -90,9 +90,12 @@ namespace RealisticParking
                 customCount += (ushort)((demandData.demand - demandTolerance) / demandSizePerSpot);
             }
 
-            if (!garageCountLookup.HasComponent(entity))
-                commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
-            commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));
+            if (customCount > demandTolerance)
+            {
+                if (!garageCountLookup.HasComponent(entity))
+                    commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
+                commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));           
+            }
 
             return (ushort)math.max(math.min((uint)customCount, garageLane.m_VehicleCapacity), vanillaCount);
         }
