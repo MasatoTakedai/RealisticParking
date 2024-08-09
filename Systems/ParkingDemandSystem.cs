@@ -1,4 +1,8 @@
-﻿using Game;
+﻿/// <summary>
+/// Processes parking demand and sets tag to update pathfinding for parking
+/// </summary>
+
+using Game;
 using Game.Common;
 using Game.Net;
 using Game.Tools;
@@ -44,9 +48,9 @@ namespace RealisticParking
                     continue;
                 }
 
+                // if a new car is queued add to parking demand data and add flag to update pathfinding if needed
                 if (carQueuedLookup.HasComponent(entity))
                 {
-                    // add to parking demand data and add flag to update pathfinding if needed
                     if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData))
                     {
                         short newDemand = (short)(demandData.demand + 1);
@@ -72,7 +76,7 @@ namespace RealisticParking
 
                 }
                 // remove demand and garage count component if cooldown reached
-                else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownStartIndex + cooldownLength)
+                else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownStartFrame + cooldownLength)
                 {
                     commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
                     commandBuffer.RemoveComponent<GarageCount>(unfilteredChunkIndex, entity);

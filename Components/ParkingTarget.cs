@@ -1,4 +1,8 @@
-﻿using Colossal.Serialization.Entities;
+﻿/// <summary>
+/// Keeps track of parking entity that personal cars are trying to navigate to.  Not needed for actual gameplay but useful for testing
+/// </summary>
+
+using Colossal.Serialization.Entities;
 using Unity.Entities;
 
 namespace RealisticParking

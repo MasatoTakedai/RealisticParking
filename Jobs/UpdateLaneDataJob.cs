@@ -1,4 +1,7 @@
-﻿/* copied from ParkingLaneDataSystem with some custom modifications */
+﻿/// <summary>
+/// Copied from original UpdateLaneDataJob.  Calculates custom free space for ParkingLanes and car count for GarageLanes to simulate induced demand 
+/// and updates increased number of garage spots.
+/// </summary>
 
 using Colossal.Mathematics;
 using Colossal.Collections;

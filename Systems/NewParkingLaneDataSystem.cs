@@ -1,4 +1,8 @@
-﻿using Game;
+﻿/// <summary>
+/// Replaces ParkingLaneDataSystem with a custom UpdateLaneDataJob
+/// </summary>
+
+using Game;
 using Game.Common;
 using Game.Net;
 using Game.Simulation;

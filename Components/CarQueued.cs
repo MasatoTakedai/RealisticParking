@@ -1,4 +1,8 @@
-﻿using Unity.Entities;
+﻿/// <summary>
+/// Tag component for use on parking that has been pathfinded to by a personal car
+/// </summary>
+
+using Unity.Entities;
 
 namespace RealisticParking
 {

@@ -1,4 +1,8 @@
-﻿using Game;
+﻿/// <summary>
+/// Replaces PersonalCarAISystem with a custom PersonalCarTickJob
+/// </summary>
+
+using Game;
 using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;

@@ -1,4 +1,8 @@
-﻿using Colossal.Serialization.Entities;
+﻿/// <summary>
+/// Keeps track of the actual garage car count for personal car parking validation
+/// </summary>
+
+using Colossal.Serialization.Entities;
 using Unity.Entities;
 
 namespace RealisticParking

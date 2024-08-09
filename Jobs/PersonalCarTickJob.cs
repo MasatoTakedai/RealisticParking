@@ -1,4 +1,8 @@
-﻿using Game.Agents;
+﻿/// <summary>
+/// Copied from original PersonalCarTickJob.  Processes ParkingTarget assignment and modifies personal car navigation code.
+/// </summary>
+
+using Game.Agents;
 using Game.Buildings;
 using Game.Citizens;
 using Game.City;
@@ -42,6 +46,7 @@ namespace RealisticParking
             m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
         }
 
+        // return vanilla limit of 4000 if disabled
         private int GetRerouteLimit() 
         {
             if (enableRerouteLimit)
