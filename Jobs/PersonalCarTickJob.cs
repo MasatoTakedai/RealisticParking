@@ -1,5 +1,5 @@
 ﻿/// <summary>
-/// Copied from original PersonalCarTickJob.  Processes ParkingTarget assignment and modifies personal car navigation code.
+/// Copied from original PersonalCarTickJob.  Processes CarQueued assignment and modifies personal car navigation code.
 /// </summary>
 
 using Game.Agents;
@@ -27,7 +27,6 @@ namespace RealisticParking
     public struct PersonalCarTickJob : IJobChunk
     {
         // custom code start
-        [ReadOnly] public ComponentLookup<ParkingTarget> parkingTargetLookup;
         [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;   
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public bool enableRerouteLimit;
@@ -39,10 +38,10 @@ namespace RealisticParking
             if (!enableDemandSystem)
                 return;
             
-            if (!parkingTargetLookup.HasComponent(entity))
+            /*if (!parkingTargetLookup.HasComponent(entity))
                 m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
 
-            m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));
+            m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));*/
             m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
         }
 

@@ -209,7 +209,6 @@ namespace RealisticParking
             jobData.m_MoneyTransferQueue = m_Actions.m_MoneyTransferQueue.AsParallelWriter();
             jobData.m_StatisticsEventQueue = m_CityStatisticsSystem.GetStatisticsEventQueue(out var deps).AsParallelWriter();
             jobData.m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out var deps2).AsParallelWriter();
-            jobData.parkingTargetLookup = SystemAPI.GetComponentLookup<ParkingTarget>(isReadOnly: true);
             jobData.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
             jobData.enableRerouteLimit = this.enableRerouteLimit;
             jobData.rerouteLimit = this.rerouteLimit;
