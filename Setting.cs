@@ -77,8 +77,8 @@ namespace RealisticParking
         {
             EnableInducedDemand = true;
             InducedDemandCooldown = 6000;
-            InducedDemandInitialTolerance = 6;
-            InducedDemandQueueSizePerSpot = 1.8f;
+            InducedDemandInitialTolerance = 5;
+            InducedDemandQueueSizePerSpot = 1.5f;
             EnableRerouteDistance = true;
             RerouteDistance = 10;
             GarageSpotsPerResProp = 1.3f;
