@@ -33,7 +33,7 @@ namespace RealisticParking
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public int InducedDemandInitialTolerance { get; set; }
 
-        [SettingsUISlider(min = 1.0f, max = 10.0f, step = 0.25f, unit = "floatSingleFraction")]
+        [SettingsUISlider(min = 1.0f, max = 10.0f, step = 0.1f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, InducedDemandGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public float InducedDemandQueueSizePerSpot { get; set; }
@@ -48,13 +48,13 @@ namespace RealisticParking
         public bool EnableRerouteDistance { get; set; }
         private bool hideRerouteDistance() => !EnableRerouteDistance;
 
-        [SettingsUISlider(min = 1, max = 500, step = 1)]
+        [SettingsUISlider(min = 1, max = 200, step = 1)]
         [SettingsUISection(MainTab, RerouteDistanceGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideRerouteDistance))]
         public int RerouteDistance { get; set; }
 
 
-        [SettingsUISlider(min = 0f, max = 4f, step = 0.25f, unit = "floatSingleFraction")]
+        [SettingsUISlider(min = 0f, max = 4f, step = 0.1f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, kGarageSpotsGroup)]
         public float GarageSpotsPerResProp { get; set; }
 
@@ -78,11 +78,11 @@ namespace RealisticParking
             EnableInducedDemand = true;
             InducedDemandCooldown = 6000;
             InducedDemandInitialTolerance = 6;
-            InducedDemandQueueSizePerSpot = 1.5f;
+            InducedDemandQueueSizePerSpot = 1.8f;
             EnableRerouteDistance = true;
-            RerouteDistance = 12;
-            GarageSpotsPerResProp = 1.2f;
-            GarageSpotsPerWorker = 0.3f;
+            RerouteDistance = 10;
+            GarageSpotsPerResProp = 1.3f;
+            GarageSpotsPerWorker = 0.5f;
         }
     }
 
