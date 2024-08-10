@@ -21,7 +21,7 @@ namespace RealisticParking
 
         public Setting(IMod mod) : base(mod)
         {
-
+            SetDefaults();
         }
 
         [SettingsUISection(MainTab, InducedDemandGroup)]
