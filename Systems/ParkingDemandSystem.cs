@@ -88,7 +88,7 @@ namespace RealisticParking
 
     public partial class ParkingDemandSystem : GameSystemBase
     {
-        private EntityCommandBufferSystem entityCommandBufferSystem;
+        private ModificationBarrier1 modificationBarrier1;
         private SimulationSystem simulationSystem;
         private bool enableDemandSystem;
         private uint cooldownLength;
@@ -99,7 +99,7 @@ namespace RealisticParking
         protected override void OnCreate()
         {
             base.OnCreate();
-            entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationBarrier1>();
+            modificationBarrier1 = World.GetExistingSystemManaged<ModificationBarrier1>();
             simulationSystem = World.GetExistingSystemManaged<SimulationSystem>();
 
             Mod.INSTANCE.settings.onSettingsApplied += settings =>
@@ -148,8 +148,7 @@ namespace RealisticParking
             parkingDemandJob.entityType = SystemAPI.GetEntityTypeHandle();
             parkingDemandJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             parkingDemandJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
-            parkingDemandJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+            parkingDemandJob.commandBuffer = modificationBarrier1.CreateCommandBuffer().AsParallelWriter();
             parkingDemandJob.frameIndex = simulationSystem.frameIndex;
             parkingDemandJob.enableDemandSystem = this.enableDemandSystem;
             parkingDemandJob.cooldownLength = this.cooldownLength;
@@ -157,6 +156,7 @@ namespace RealisticParking
             parkingDemandJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(parkingDemandJob, updatedParkingQuery, base.Dependency);
             base.Dependency = jobHandle;
+            modificationBarrier1.AddJobHandleForProducer(jobHandle);
         }
 
         private void UpdateSettings(Setting settings)

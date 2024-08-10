@@ -23,7 +23,7 @@ namespace RealisticParking
 {
     public partial class NewParkingLaneDataSystem : GameSystemBase
     {
-        private EntityCommandBufferSystem entityCommandBufferSystem;
+        private ModificationEndBarrier modificationEndBarrier;
         private Game.Objects.SearchSystem m_ObjectSearchSystem;
         private ParkingLaneDataSystem parkingLaneDataSystem;
         private SimulationSystem simulationSystem;
@@ -39,7 +39,7 @@ namespace RealisticParking
         protected override void OnCreate()
         {
             base.OnCreate();
-            entityCommandBufferSystem = World.GetExistingSystemManaged<ModificationEndBarrier>();
+            modificationEndBarrier = World.GetExistingSystemManaged<ModificationEndBarrier>();
             simulationSystem = World.GetExistingSystemManaged<SimulationSystem>();
             m_ObjectSearchSystem = base.World.GetOrCreateSystemManaged<Game.Objects.SearchSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
@@ -147,13 +147,14 @@ namespace RealisticParking
             updateLaneJob.parkingDemandLookup = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             updateLaneJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
             updateLaneJob.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
-            EntityCommandBuffer entityCommandBuffer = entityCommandBufferSystem.CreateCommandBuffer();
-            updateLaneJob.commandBuffer = entityCommandBufferSystem.CreateCommandBuffer().AsParallelWriter();
+            updateLaneJob.commandBuffer = modificationEndBarrier.CreateCommandBuffer().AsParallelWriter();
             updateLaneJob.enableDemandSystem = this.enableDemandSystem;
             updateLaneJob.demandTolerance = this.demandTolerance;
             updateLaneJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
+            modificationEndBarrier.AddJobHandleForProducer(jobHandle);
+
             base.Dependency = jobHandle;
         }
 
