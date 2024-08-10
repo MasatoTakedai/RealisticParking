@@ -45,12 +45,14 @@ namespace RealisticParking
             float customFreeSpace = vanillaFreeSpace;
             if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
             {
-                // set to have no free space if the demand is high enough
+                // calculate number of spots free with diff alg for roadside parking and parking lots
                 int spotsFree = 0;
                 if (parkingLaneData.m_SlotInterval != 0)
                     spotsFree = (int)math.floor((curve.m_Length + 0.01f) / parkingLaneData.m_SlotInterval) - laneObjects.Length;
                 else
                     spotsFree = (int)math.ceil(vanillaFreeSpace / 6);
+
+                // if there are no more spots for cars to queue to that spot, remove free space
                 int supplyLeft = demandTolerance + (int)(spotsFree * demandSizePerSpot) - demandData.demand;
                 if (supplyLeft <= 0)
                     customFreeSpace = 0.01f;
@@ -65,7 +67,9 @@ namespace RealisticParking
             return customFreeSpace;
         }
 
-        private int ApplyCustomGarageCapacity(Entity buildingEntity, BuildingPropertyData buildingData) {
+        // apply custom garage capacity based on household and worker count
+        private int ApplyCustomGarageCapacity(Entity buildingEntity, BuildingPropertyData buildingData) 
+        {
             int capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerResident);
             if ((buildingData.CountProperties(Game.Zones.AreaType.Commercial) > 0 || buildingData.CountProperties(Game.Zones.AreaType.Industrial) > 0)
                 && renterLookup.TryGetBuffer(buildingEntity, out DynamicBuffer<Renter> renters))
@@ -81,6 +85,7 @@ namespace RealisticParking
             return capacity;
         }
 
+        // set garage count based on demand and add GarageCount component holding the actual count value
         private ushort CustomCountGarageVehicles(Entity entity, int unfilteredChunkIndex, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
             ushort vanillaCount = CountVehicles(entity, owner, curve, connectionLane);
@@ -88,13 +93,13 @@ namespace RealisticParking
             if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
             {
                 customCount += (ushort)((demandData.demand - demandTolerance) / demandSizePerSpot);
-            }
 
-            if (customCount > demandTolerance)
-            {
-                if (!garageCountLookup.HasComponent(entity))
-                    commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
-                commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));           
+                if (customCount > demandTolerance)
+                {
+                    if (!garageCountLookup.HasComponent(entity))
+                        commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));
+                }
             }
 
             return (ushort)math.max(math.min((uint)customCount, garageLane.m_VehicleCapacity), vanillaCount);
