@@ -92,7 +92,7 @@ namespace RealisticParking
             ushort customCount = vanillaCount;
             if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
             {
-                customCount += (ushort)((demandData.demand - demandTolerance) / demandSizePerSpot);
+                customCount += (ushort)math.max(0, (demandData.demand - demandTolerance) / demandSizePerSpot);
 
                 if (customCount > demandTolerance)
                 {
