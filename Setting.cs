@@ -5,6 +5,7 @@ using Game.Settings;
 using Game.UI;
 using Game.UI.Widgets;
 using System.Collections.Generic;
+using Unity.Entities;
 
 namespace RealisticParking
 {
@@ -61,6 +62,16 @@ namespace RealisticParking
         [SettingsUISection(MainTab, kGarageSpotsGroup)]
         public float GarageSpotsPerWorker { get; set; }
 
+        [SettingsUIButton]
+        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        public bool SetGarageCapacitiesButton { set { SetGarageCapacities(); } }
+
+        private void SetGarageCapacities()
+        {
+            if (World.DefaultGameObjectInjectionWorld.IsCreated)
+                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<NewParkingLaneDataSystem>().UpdateGarageCapacities();
+        }
+
 
         public override void SetDefaults()
         {
@@ -96,17 +107,17 @@ namespace RealisticParking
                     "Enable induced demand system for parking spots. This system counts every time a car pathfinds to a parking lane, and once enough cars have routed to it, " +
                     "it will disable that spot for future pathfinding. The system resets once the spot is full or enough time passes." 
                 },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Induced Demand Initial Tolerance" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandInitialTolerance)), "Demand Initial Tolerance" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandInitialTolerance)), 
                     "The number of cars for parking lanes to initially let pathfind in without considering the queue size per spot. For example, if there are 2 spots open and " +
                     "this is set to 5 and the queue size per spot to 1, the parking spot will be disabled after 7 cars have pathfinded to that spot. If this setting is set " +
                     "to a low number with limited parking spots in the city, it may result in a low number of cars driving around." 
                 },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Induced Demand Queue Size per Parking Spot" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Demand Queue Size per Parking Spot" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), 
                     "The number of cars to be allowed to pathfind to each available parking spot. Decimal values are allowed." 
                 },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Induced Demand Reset Length" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Demand Reset Length" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), 
                     "The number of simulation frames after the most recent pathfind for the demand to reset to 0. For reference, one in-game minute is approximately equal to " +
                     "182 frames." 
@@ -131,6 +142,10 @@ namespace RealisticParking
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerWorker)), "Garage Spots per Worker" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerWorker)),
                     "The number of garage spots per worker in the property. Non-RICO buildings are not affected. Properties with no garage in the asset are not affected."
+                },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.SetGarageCapacitiesButton)), "Set Garage Capacities" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.SetGarageCapacitiesButton)),
+                    "Sets custom garage capacities."
                 },
             };
         }

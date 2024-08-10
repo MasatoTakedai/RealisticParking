@@ -17,6 +17,7 @@ using Game.City;
 using Game.Objects;
 using Game.Pathfind;
 using Game.Companies;
+using Unity.Collections;
 
 namespace RealisticParking
 {
@@ -28,6 +29,7 @@ namespace RealisticParking
         private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
         private EntityQuery m_LaneQuery;
+        private EntityQuery garageQuery;
         private float garageSpotsPerResProp;
         private float garageSpotsPerWorker;
         private bool enableDemandSystem;
@@ -77,6 +79,17 @@ namespace RealisticParking
                 None = new ComponentType[3]
                 {
                 ComponentType.ReadOnly<Updated>(),
+                ComponentType.ReadOnly<Deleted>(),
+                ComponentType.ReadOnly<Temp>()
+                }
+            });
+
+            garageQuery = GetEntityQuery(new EntityQueryDesc
+            {
+                All = new ComponentType[1] { ComponentType.ReadOnly<GarageLane>() },
+                Any = new ComponentType[0] {},
+                None = new ComponentType[2]
+                {
                 ComponentType.ReadOnly<Deleted>(),
                 ComponentType.ReadOnly<Temp>()
                 }
@@ -151,6 +164,15 @@ namespace RealisticParking
             this.enableDemandSystem = settings.EnableInducedDemand;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
+        }
+
+        public void UpdateGarageCapacities()
+        {
+            NativeArray<Entity> garages = garageQuery.ToEntityArray(Allocator.Temp);
+            for (int i = 0; i < garages.Length; i++)
+            {
+                EntityManager.AddComponent<PathfindUpdated>(garages[i]);
+            }
         }
     }
 }
