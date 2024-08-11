@@ -34,6 +34,7 @@ namespace RealisticParking
         [ReadOnly] public BufferLookup<Renter> renterLookup;
         [ReadOnly] public ComponentLookup<WorkProvider> workProviderLookup;
         [ReadOnly] public bool enableDemandSystem;
+        [ReadOnly] public bool enableParkingMinimums;
         [ReadOnly] public int demandTolerance;
         [ReadOnly] public float demandSizePerSpot;
         [ReadOnly] public float garageSpotsPerResident;
@@ -67,20 +68,28 @@ namespace RealisticParking
             return customFreeSpace;
         }
 
-        // apply custom garage capacity based on household and worker count
+        // apply custom garage capacity based on household and worker count if enabled
         private int ApplyCustomGarageCapacity(Entity buildingEntity, BuildingPropertyData buildingData) 
         {
-            int capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerResident);
-            if ((buildingData.CountProperties(Game.Zones.AreaType.Commercial) > 0 || buildingData.CountProperties(Game.Zones.AreaType.Industrial) > 0)
-                && renterLookup.TryGetBuffer(buildingEntity, out DynamicBuffer<Renter> renters))
+            int capacity;
+            if (enableParkingMinimums)
             {
-                for (int i = 0; i < renters.Length; i++)
+                capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerResident);
+                if ((buildingData.CountProperties(Game.Zones.AreaType.Commercial) > 0 || buildingData.CountProperties(Game.Zones.AreaType.Industrial) > 0)
+                    && renterLookup.TryGetBuffer(buildingEntity, out DynamicBuffer<Renter> renters))
                 {
-                    if (workProviderLookup.TryGetComponent(renters[i], out var workProvider))
+                    for (int i = 0; i < renters.Length; i++)
                     {
-                        capacity += (int)(workProvider.m_MaxWorkers * garageSpotsPerWorker);
+                        if (workProviderLookup.TryGetComponent(renters[i], out var workProvider))
+                        {
+                            capacity += (int)(workProvider.m_MaxWorkers * garageSpotsPerWorker);
+                        }
                     }
                 }
+            }
+            else
+            {
+                capacity = Mathf.RoundToInt(buildingData.m_SpaceMultiplier);
             }
             return capacity;
         }

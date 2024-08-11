@@ -54,12 +54,18 @@ namespace RealisticParking
         public int RerouteDistance { get; set; }
 
 
+        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        public bool EnableParkingMins { get; set; }
+        private bool hideParkingMins() => !EnableParkingMins;
+
         [SettingsUISlider(min = 0f, max = 4f, step = 0.1f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(hideParkingMins))]
         public float GarageSpotsPerResProp { get; set; }
 
         [SettingsUISlider(min = 0f, max = 1f, step = 0.1f, unit = "floatSingleFraction")]
         [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUIDisableByCondition(typeof(Setting), nameof(hideParkingMins))]
         public float GarageSpotsPerWorker { get; set; }
 
         [SettingsUIButton]
@@ -81,6 +87,7 @@ namespace RealisticParking
             InducedDemandQueueSizePerSpot = 1.5f;
             EnableRerouteDistance = true;
             RerouteDistance = 10;
+            EnableParkingMins = true;
             GarageSpotsPerResProp = 1.3f;
             GarageSpotsPerWorker = 0.5f;
         }
@@ -134,7 +141,11 @@ namespace RealisticParking
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RerouteDistance)), 
                     "Number of nodes away for cars to reroute based on parking availability. For reference, the vanilla value is 4000." 
                 },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Garage Spots" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Parking Minimums" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableParkingMins)), "Enable Parking Minimums" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableParkingMins)),
+                    "Enable parking minimums for garages. Vanilla apartments have upwards of 3 spots and offices have around 30."
+                },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerResProp)), "Garage Spots per Household" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerResProp)), 
                     "The number of garage spots per household in the apartment. Apartments with no garage in the asset are not affected." 
@@ -145,7 +156,7 @@ namespace RealisticParking
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.SetGarageCapacitiesButton)), "Set Garage Capacities" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.SetGarageCapacitiesButton)),
-                    "Sets custom garage capacities."
+                    "Sets garage capacities based on current settings."
                 },
             };
         }

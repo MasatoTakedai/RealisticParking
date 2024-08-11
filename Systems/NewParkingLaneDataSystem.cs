@@ -33,6 +33,7 @@ namespace RealisticParking
         private float garageSpotsPerResProp;
         private float garageSpotsPerWorker;
         private bool enableDemandSystem;
+        private bool enableParkingMinimums;
         private int demandTolerance;
         private float demandSizePerSpot;
 
@@ -149,6 +150,7 @@ namespace RealisticParking
             updateLaneJob.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
             updateLaneJob.commandBuffer = modificationEndBarrier.CreateCommandBuffer().AsParallelWriter();
             updateLaneJob.enableDemandSystem = this.enableDemandSystem;
+            updateLaneJob.enableParkingMinimums = this.enableParkingMinimums;
             updateLaneJob.demandTolerance = this.demandTolerance;
             updateLaneJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
@@ -163,6 +165,7 @@ namespace RealisticParking
             this.garageSpotsPerResProp = settings.GarageSpotsPerResProp;
             this.garageSpotsPerWorker = settings.GarageSpotsPerWorker;
             this.enableDemandSystem = settings.EnableInducedDemand;
+            this.enableParkingMinimums = settings.EnableParkingMins;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
         }
