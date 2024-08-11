@@ -94,7 +94,7 @@ namespace RealisticParking
             {
                 customCount += (ushort)math.max(0, (demandData.demand - demandTolerance) / demandSizePerSpot);
 
-                if (customCount > demandTolerance)
+                if (customCount > vanillaCount)
                 {
                     if (!garageCountLookup.HasComponent(entity))
                         commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
