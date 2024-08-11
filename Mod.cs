@@ -31,7 +31,7 @@ namespace RealisticParking
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
-            updateSystem.UpdateBefore<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
+            updateSystem.UpdateAt<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
             updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification1);
         }
 
