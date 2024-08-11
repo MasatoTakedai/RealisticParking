@@ -1,5 +1,5 @@
 # Realistic Parking Mod for Cities Skylines II
-Published!  Link to pdxMods: https://mods.paradoxplaza.com/mods/87313/Windows
+Published!  Link to Paradox Mods: https://mods.paradoxplaza.com/mods/87313/Windows
 
 This mod aims to make the parking behavior more realistic and improve traffic efficiency.
 
