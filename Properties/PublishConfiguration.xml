@@ -39,7 +39,7 @@ This mod aims to make the parking behavior more realistic and improve traffic ef
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
-  <Screenshot Value="Properties/Landing.jpg" />
+  <Screenshot Value="Properties/Landing.png" />
 	<Screenshot Value="Properties/SettingsScreenshot.jpg" />
 	<!--Tag, can be set multiple times-->
 	<Tag Value="Code Mod" />
