@@ -16,7 +16,7 @@ Tired of parking garages for high-rise buildings barely having any parking spots
 This mod aims to make the parking behavior more realistic and improve traffic efficiency.
 
 ## Features
-* **Induced Demand for Parking**: Parking spots now only accept a limited amount of pathfinding requests, so once enough cars start driving towards a spot, it will become closed off to future pathfinding. This makes it so that there will be a more realistic amount of cars in the city relative to the amount of available parking.
+* **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars start driving towards a spot, it will become closed off to future pathfinding. This makes it so that there will be a more realistic amount of cars in the city relative to the amount of available parking.
 * **Reduced Parking Reroute Distance**: In vanilla, cars can detect an unavailable parking spot up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that number so that cars will only try to find new parking once they are near their target parking spot.
 * **Increased Parking Garage Capacities**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property. Note that many building assets do not have a parking garage built in, and this mod does not add them in.
 
