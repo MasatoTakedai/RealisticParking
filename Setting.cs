@@ -115,7 +115,7 @@ namespace RealisticParking
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Demand Queue Size per Parking Spot" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), 
-                    "The number of cars to be allowed to pathfind to each available parking spot. Decimal values are allowed." 
+                    "The number of cars to be allowed to pathfind to each available parking spot." 
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Demand Reset Length" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), 
