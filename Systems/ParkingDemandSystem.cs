@@ -11,9 +11,11 @@ using Unity.Burst.Intrinsics;
 using Unity.Collections;
 using Unity.Jobs;
 using Game.Simulation;
+using Unity.Burst;
 
 namespace RealisticParking
 {
+    [BurstCompile]
     public struct UpdateParkingDemandJob : IJobChunk
     {
         public EntityCommandBuffer.ParallelWriter commandBuffer;

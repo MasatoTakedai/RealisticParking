@@ -10,14 +10,15 @@ using Unity.Entities;
 namespace RealisticParking
 {
     [FileLocation(nameof(RealisticParking))]
-    [SettingsUIShowGroupName(InducedDemandGroup, RerouteDistanceGroup, kGarageSpotsGroup)]
+    [SettingsUIShowGroupName(InducedDemandGroup, RerouteDistanceGroup, ParkingMinimumsGroup)]
     public class Setting : ModSetting
     {
         public const string MainTab = "Main";
 
         public const string InducedDemandGroup = "Induced Demand";
         public const string RerouteDistanceGroup = "Reroute Distance";
-        public const string kGarageSpotsGroup = "Garage Spots";
+        public const string ParkingMinimumsGroup = "Garage Spots";
+        public const string ResetGroup = "Reset";
 
         public Setting(IMod mod) : base(mod)
         {
@@ -54,22 +55,22 @@ namespace RealisticParking
         public int RerouteDistance { get; set; }
 
 
-        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUISection(MainTab, ParkingMinimumsGroup)]
         public bool EnableParkingMins { get; set; }
         private bool hideParkingMins() => !EnableParkingMins;
 
         [SettingsUISlider(min = 0f, max = 4f, step = 0.1f, unit = "floatSingleFraction")]
-        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUISection(MainTab, ParkingMinimumsGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideParkingMins))]
         public float GarageSpotsPerResProp { get; set; }
 
         [SettingsUISlider(min = 0f, max = 1f, step = 0.1f, unit = "floatSingleFraction")]
-        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUISection(MainTab, ParkingMinimumsGroup)]
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideParkingMins))]
         public float GarageSpotsPerWorker { get; set; }
 
         [SettingsUIButton]
-        [SettingsUISection(MainTab, kGarageSpotsGroup)]
+        [SettingsUISection(MainTab, ParkingMinimumsGroup)]
         public bool SetGarageCapacitiesButton { set { SetGarageCapacities(); } }
 
         private void SetGarageCapacities()
@@ -77,6 +78,11 @@ namespace RealisticParking
             if (World.DefaultGameObjectInjectionWorld.IsCreated)
                 World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<NewParkingLaneDataSystem>().UpdateGarageCapacities();
         }
+
+
+        [SettingsUIButton]
+        [SettingsUISection(MainTab, ResetGroup)]
+        public bool ResetButton { set { SetDefaults(); } }
 
 
         public override void SetDefaults()
@@ -88,7 +94,7 @@ namespace RealisticParking
             EnableRerouteDistance = true;
             RerouteDistance = 10;
             EnableParkingMins = true;
-            GarageSpotsPerResProp = 1.3f;
+            GarageSpotsPerResProp = 1.2f;
             GarageSpotsPerWorker = 0.5f;
         }
     }
@@ -141,10 +147,11 @@ namespace RealisticParking
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.RerouteDistance)), 
                     "Number of nodes away for cars to reroute based on parking availability. For reference, the vanilla value is 4000." 
                 },
-                { m_Setting.GetOptionGroupLocaleID(Setting.kGarageSpotsGroup), "Parking Minimums" },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableParkingMins)), "Enable Parking Minimums" },
+                { m_Setting.GetOptionGroupLocaleID(Setting.ParkingMinimumsGroup), "Parking Minimums" },
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableParkingMins)), "Enable Parking Minimums for Garages" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableParkingMins)),
-                    "Enable parking minimums for garages. Vanilla apartments have upwards of 3 spots and offices have around 30."
+                    "Enable parking minimums for garages. If enabled, custom garage capacities will replace vanilla values. Vanilla apartments have upwards of 3 spots " +
+                    "and offices have around 30."
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerResProp)), "Garage Spots per Household" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerResProp)), 
@@ -156,7 +163,12 @@ namespace RealisticParking
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.SetGarageCapacitiesButton)), "Set Garage Capacities" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.SetGarageCapacitiesButton)),
-                    "Sets garage capacities based on current settings."
+                    "Set garage capacities based on current settings."
+                },
+
+                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetButton)), "Reset Settings" },
+                { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetButton)),
+                    "Reset settings to default values."
                 },
             };
         }

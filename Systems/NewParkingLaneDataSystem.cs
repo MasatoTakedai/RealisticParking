@@ -28,7 +28,7 @@ namespace RealisticParking
         private ParkingLaneDataSystem parkingLaneDataSystem;
         private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
-        private EntityQuery m_LaneQuery;
+        private EntityQuery updatedParkingQuery;
         private EntityQuery garageQuery;
         private float garageSpotsPerResProp;
         private float garageSpotsPerWorker;
@@ -56,7 +56,7 @@ namespace RealisticParking
             };
             this.UpdateSettings(Mod.INSTANCE.settings);
 
-            m_LaneQuery = GetEntityQuery(new EntityQueryDesc
+            updatedParkingQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[1] { ComponentType.ReadOnly<Updated>() },
                 Any = new ComponentType[2]
@@ -96,7 +96,7 @@ namespace RealisticParking
                 }
             });
 
-            RequireForUpdate(m_LaneQuery);
+            RequireForUpdate(updatedParkingQuery);
         }
 
         protected override void OnUpdate()
@@ -108,10 +108,10 @@ namespace RealisticParking
             updateLaneJob.m_LaneType = SystemAPI.GetComponentTypeHandle<Lane>(isReadOnly: true);
             updateLaneJob.m_PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
             updateLaneJob.m_LaneOverlapType = SystemAPI.GetBufferTypeHandle<LaneOverlap>(isReadOnly: true);
-            updateLaneJob.m_ParkingLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ParkingLane>(isReadOnly: true);
-            updateLaneJob.m_ConnectionLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ConnectionLane>(isReadOnly: true);
-            updateLaneJob.m_GarageLaneType = SystemAPI.GetComponentTypeHandle<GarageLane>(isReadOnly: true);
-            updateLaneJob.m_LaneObjectType = SystemAPI.GetBufferTypeHandle<LaneObject>(isReadOnly: true);
+            updateLaneJob.m_ParkingLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ParkingLane>(isReadOnly: false);
+            updateLaneJob.m_ConnectionLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ConnectionLane>(isReadOnly: false);
+            updateLaneJob.m_GarageLaneType = SystemAPI.GetComponentTypeHandle<GarageLane>(isReadOnly: false);
+            updateLaneJob.m_LaneObjectType = SystemAPI.GetBufferTypeHandle<LaneObject>(isReadOnly: false);
             updateLaneJob.m_OwnerData = SystemAPI.GetComponentLookup<Owner>(isReadOnly: true);
             updateLaneJob.m_LaneData = SystemAPI.GetComponentLookup<Lane>(isReadOnly: true);
             updateLaneJob.m_CarLaneData = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true);
@@ -153,7 +153,7 @@ namespace RealisticParking
             updateLaneJob.enableParkingMinimums = this.enableParkingMinimums;
             updateLaneJob.demandTolerance = this.demandTolerance;
             updateLaneJob.demandSizePerSpot = this.demandSizePerSpot;
-            JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, m_LaneQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
+            JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(updateLaneJob, updatedParkingQuery, JobHandle.CombineDependencies(base.Dependency, dependencies));
             m_ObjectSearchSystem.AddMovingSearchTreeReader(jobHandle);
             modificationEndBarrier.AddJobHandleForProducer(jobHandle);
 
