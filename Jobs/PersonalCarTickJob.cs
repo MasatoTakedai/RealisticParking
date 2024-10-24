@@ -380,9 +380,9 @@ namespace RealisticParking
                         minT = (((carNavigationLane.m_Flags & Game.Vehicles.CarLaneFlags.Reserved) == 0) ? carNavigationLane.m_CurvePosition.x : carNavigationLane.m_CurvePosition.y);
                     }
                     float offset;
-                    float parkingLength = VehicleUtils.GetParkingLength(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset);
+                    float y = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset).y;
                     float curvePos = value.m_CurvePosition.x;
-                    if (VehicleUtils.FindFreeParkingSpace(ref random, value.m_Lane, minT, parkingLength, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
+                    if (VehicleUtils.FindFreeParkingSpace(ref random, value.m_Lane, minT, y, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
                     {
                         if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) == 0)
                         {
@@ -453,9 +453,9 @@ namespace RealisticParking
                     minT2 = path[pathOwner.m_ElementIndex + num2 - 1].m_TargetDelta.x;
                 }
                 float offset2;
-                float parkingLength2 = VehicleUtils.GetParkingLength(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset2);
+                float y2 = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset2).y;
                 float curvePos2 = pathElement.m_TargetDelta.x;
-                if (VehicleUtils.FindFreeParkingSpace(ref random, pathElement.m_Target, minT2, parkingLength2, offset2, ref curvePos2, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
+                if (VehicleUtils.FindFreeParkingSpace(ref random, pathElement.m_Target, minT2, y2, offset2, ref curvePos2, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
                 {
                     return;
                 }
@@ -528,8 +528,8 @@ namespace RealisticParking
                 if (m_ParkingLaneData.HasComponent(pathElement2.m_Target))
                 {
                     float offset;
-                    float parkingLength = VehicleUtils.GetParkingLength(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset);
-                    if (!VehicleUtils.FindFreeParkingSpace(ref random, pathElement2.m_Target, pathElement2.m_TargetDelta.x, parkingLength, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: false))
+                    float y = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset).y;
+                    if (!VehicleUtils.FindFreeParkingSpace(ref random, pathElement2.m_Target, pathElement2.m_TargetDelta.x, y, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: false))
                     {
                         curvePos = random.NextFloat(0.05f, 0.95f);
                     }
@@ -862,7 +862,7 @@ namespace RealisticParking
                 pathfindParameters.m_Methods = PathMethod.Pedestrian | PathMethod.Road | PathMethod.Parking;
                 pathfindParameters.m_ParkingTarget = GetParkingSource(entity, ref currentLane);
                 pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
-                pathfindParameters.m_ParkingLength = VehicleUtils.GetParkingLength(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData);
+                pathfindParameters.m_ParkingSize = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData);
                 pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
                 pathfindParameters.m_SecondaryIgnoredRules = VehicleUtils.GetIgnoredPathfindRulesTaxiDefaults();
                 parameters = pathfindParameters;
