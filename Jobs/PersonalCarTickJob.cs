@@ -360,80 +360,12 @@ namespace RealisticParking
         private void CheckParkingSpace(Entity entity, ref Random random, ref CarCurrentLane currentLane, ref PathOwner pathOwner, DynamicBuffer<CarNavigationLane> navigationLanes)
         {
             DynamicBuffer<PathElement> path = m_PathElements[entity];
-            for (int i = 0; i < math.min(GetRerouteLimit(), navigationLanes.Length); i++)
+            ComponentLookup<Blocker> blockerData = default(ComponentLookup<Blocker>);
+            if (VehicleUtils.ValidateParkingSpace(entity, ref random, ref currentLane, ref pathOwner, navigationLanes, path, ref m_ParkedCarData, ref blockerData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_GarageLaneData, ref m_ConnectionLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true, boardingOnly: false) != Entity.Null)
             {
-                CarNavigationLane value = navigationLanes[i];
-                if ((value.m_Flags & Game.Vehicles.CarLaneFlags.ParkingSpace) == 0)
-                {
-                    continue;
-                }
-                if (m_ParkingLaneData.HasComponent(value.m_Lane))
-                {
-                    float minT;
-                    if (i == 0)
-                    {
-                        minT = currentLane.m_CurvePosition.y;
-                    }
-                    else
-                    {
-                        CarNavigationLane carNavigationLane = navigationLanes[i - 1];
-                        minT = (((carNavigationLane.m_Flags & Game.Vehicles.CarLaneFlags.Reserved) == 0) ? carNavigationLane.m_CurvePosition.x : carNavigationLane.m_CurvePosition.y);
-                    }
-                    float offset;
-                    float y = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset).y;
-                    float curvePos = value.m_CurvePosition.x;
-                    if (VehicleUtils.FindFreeParkingSpace(ref random, value.m_Lane, minT, y, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
-                    {
-                        if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) == 0)
-                        {
-                            value.m_Flags |= Game.Vehicles.CarLaneFlags.Validated;
-                            navigationLanes[i] = value;
-                        }
-                        if (curvePos != value.m_CurvePosition.x)
-                        {
-                            VehicleUtils.SetParkingCurvePos(path, pathOwner, ref currentLane, navigationLanes, i, curvePos, m_CurveData);
-                        }
-                        return;
-                    }
-                    if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) != 0)
-                    {
-                        value.m_Flags &= ~Game.Vehicles.CarLaneFlags.Validated;
-                        navigationLanes[i] = value;
-                    }
-                    if (i == 0)
-                    {
-                        currentLane.m_CurvePosition.z = 1f;
-                    }
-                    pathOwner.m_State |= PathFlags.Obsolete;
-                }
-                else if (m_GarageLaneData.HasComponent(value.m_Lane))
-                {
-                    GarageLane garageLane = m_GarageLaneData[value.m_Lane];
-                    Game.Net.ConnectionLane connectionLane = m_ConnectionLaneData[value.m_Lane];
-                    if (GetActualGarageCount(value.m_Lane, garageLane) < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
-                    {
-                        if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) == 0)
-                        {
-                            value.m_Flags |= Game.Vehicles.CarLaneFlags.Validated;
-                            navigationLanes[i] = value;
-                        }
-                        return;
-                    }
-                    if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) != 0)
-                    {
-                        value.m_Flags &= ~Game.Vehicles.CarLaneFlags.Validated;
-                        navigationLanes[i] = value;
-                    }
-                    pathOwner.m_State |= PathFlags.Obsolete;
-                }
-                else if ((value.m_Flags & Game.Vehicles.CarLaneFlags.Validated) == 0)
-                {
-                    value.m_Flags |= Game.Vehicles.CarLaneFlags.Validated;
-                    navigationLanes[i] = value;
-                }
                 return;
             }
-            int num = math.min(GetRerouteLimit() - navigationLanes.Length, path.Length - pathOwner.m_ElementIndex);
+            int num = math.min(GetRerouteLimit(), path.Length - pathOwner.m_ElementIndex);
             if (num <= 0 || navigationLanes.Length <= 0)
             {
                 return;
@@ -442,20 +374,20 @@ namespace RealisticParking
             PathElement pathElement = path[pathOwner.m_ElementIndex + num2];
             if (m_ParkingLaneData.HasComponent(pathElement.m_Target))
             {
-                float minT2;
+                float minT;
                 if (num2 == 0)
                 {
-                    CarNavigationLane carNavigationLane2 = navigationLanes[navigationLanes.Length - 1];
-                    minT2 = (((carNavigationLane2.m_Flags & Game.Vehicles.CarLaneFlags.Reserved) == 0) ? carNavigationLane2.m_CurvePosition.x : carNavigationLane2.m_CurvePosition.y);
+                    CarNavigationLane carNavigationLane = navigationLanes[navigationLanes.Length - 1];
+                    minT = (((carNavigationLane.m_Flags & Game.Vehicles.CarLaneFlags.Reserved) == 0) ? carNavigationLane.m_CurvePosition.x : carNavigationLane.m_CurvePosition.y);
                 }
                 else
                 {
-                    minT2 = path[pathOwner.m_ElementIndex + num2 - 1].m_TargetDelta.x;
+                    minT = path[pathOwner.m_ElementIndex + num2 - 1].m_TargetDelta.x;
                 }
-                float offset2;
-                float y2 = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset2).y;
-                float curvePos2 = pathElement.m_TargetDelta.x;
-                if (VehicleUtils.FindFreeParkingSpace(ref random, pathElement.m_Target, minT2, y2, offset2, ref curvePos2, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
+                float offset;
+                float y = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset).y;
+                float curvePos = pathElement.m_TargetDelta.x;
+                if (VehicleUtils.FindFreeParkingSpace(ref random, pathElement.m_Target, minT, y, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: true))
                 {
                     return;
                 }
@@ -466,16 +398,16 @@ namespace RealisticParking
                 {
                     return;
                 }
-                GarageLane garageLane2 = m_GarageLaneData[pathElement.m_Target];
-                Game.Net.ConnectionLane connectionLane2 = m_ConnectionLaneData[pathElement.m_Target];
-                if (GetActualGarageCount(pathElement.m_Target, garageLane2) < garageLane2.m_VehicleCapacity && (connectionLane2.m_Flags & ConnectionLaneFlags.Disabled) == 0)
+                GarageLane garageLane = m_GarageLaneData[pathElement.m_Target];
+                Game.Net.ConnectionLane connectionLane = m_ConnectionLaneData[pathElement.m_Target];
+                if (GetActualGarageCount(pathElement.m_Target, garageLane) < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
                 {
                     return;
                 }
             }
-            for (int j = 0; j < num2; j++)
+            for (int i = 0; i < num2; i++)
             {
-                if (IsParkingLane(path[pathOwner.m_ElementIndex + j].m_Target))
+                if (IsParkingLane(path[pathOwner.m_ElementIndex + i].m_Target))
                 {
                     return;
                 }
@@ -495,52 +427,11 @@ namespace RealisticParking
             }
             DynamicBuffer<PathElement> path = m_PathElements[entity];
             PathUtils.ResetPath(ref currentLane, path, m_SlaveLaneData, m_OwnerData, m_SubLanes);
-            if (IsParkingLane(currentLane.m_Lane))
+            VehicleUtils.ResetParkingLaneStatus(entity, ref currentLane, ref pathOwner, path, ref m_EntityLookup, ref m_CurveData, ref m_ParkingLaneData, ref m_CarLaneData, ref m_ConnectionLaneData, ref m_SpawnLocationData, ref m_PrefabRefData, ref m_PrefabSpawnLocationData);
+            int i = VehicleUtils.SetParkingCurvePos(entity, ref random, currentLane, pathOwner, path, ref m_ParkedCarData, ref m_UnspawnedData, ref m_CurveData, ref m_ParkingLaneData, ref m_ConnectionLaneData, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, ref m_PrefabParkingLaneData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false);
+            if (i != path.Length)
             {
-                currentLane.m_LaneFlags |= Game.Vehicles.CarLaneFlags.ParkingSpace;
-                while (pathOwner.m_ElementIndex < path.Length)
-                {
-                    PathElement pathElement = path[pathOwner.m_ElementIndex];
-                    if (IsParkingLane(pathElement.m_Target))
-                    {
-                        VehicleUtils.SetParkingCurvePos(path, pathOwner, pathOwner.m_ElementIndex++, currentLane.m_Lane, currentLane.m_CurvePosition.z, m_CurveData);
-                        continue;
-                    }
-                    if (IsCarLane(pathElement.m_Target) || !m_EntityLookup.Exists(pathElement.m_Target))
-                    {
-                        currentLane.m_LaneFlags &= ~Game.Vehicles.CarLaneFlags.ParkingSpace;
-                    }
-                    break;
-                }
-            }
-            else if (IsCarLane(currentLane.m_Lane))
-            {
-                currentLane.m_LaneFlags &= ~Game.Vehicles.CarLaneFlags.ParkingSpace;
-            }
-            for (int i = pathOwner.m_ElementIndex; i < path.Length; i++)
-            {
-                PathElement pathElement2 = path[i];
-                if (!IsParkingLane(pathElement2.m_Target))
-                {
-                    continue;
-                }
-                float curvePos = -1f;
-                if (m_ParkingLaneData.HasComponent(pathElement2.m_Target))
-                {
-                    float offset;
-                    float y = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, out offset).y;
-                    if (!VehicleUtils.FindFreeParkingSpace(ref random, pathElement2.m_Target, pathElement2.m_TargetDelta.x, y, offset, ref curvePos, ref m_ParkedCarData, ref m_CurveData, ref m_UnspawnedData, ref m_ParkingLaneData, ref m_PrefabRefData, ref m_PrefabParkingLaneData, ref m_PrefabObjectGeometryData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false, ignoreDisabled: false))
-                    {
-                        curvePos = random.NextFloat(0.05f, 0.95f);
-                    }
-                }
-                else
-                {
-                    curvePos = random.NextFloat(0.05f, 0.95f);
-                }
-                VehicleUtils.SetParkingCurvePos(path, pathOwner, i, currentLane.m_Lane, curvePos, m_CurveData);
-                SetCustomParkingComponents(entity, jobIndex, pathElement2);
-                break;
+                SetCustomParkingComponents(entity, jobIndex, path[i]);
             }
         }
 
@@ -832,19 +723,6 @@ namespace RealisticParking
             }
         }
 
-        private Entity GetParkingSource(Entity entity, ref CarCurrentLane currentLane)
-        {
-            if (m_ParkingLaneData.HasComponent(currentLane.m_Lane))
-            {
-                return currentLane.m_Lane;
-            }
-            if (m_ConnectionLaneData.TryGetComponent(currentLane.m_Lane, out var componentData) && (componentData.m_Flags & ConnectionLaneFlags.Parking) != 0)
-            {
-                return currentLane.m_Lane;
-            }
-            return entity;
-        }
-
         private void FindNewPath(Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
         {
             CarData carData = m_PrefabCarData[prefabRef.m_Prefab];
@@ -860,7 +738,7 @@ namespace RealisticParking
                 pathfindParameters.m_WalkSpeed = 5.555556f;
                 pathfindParameters.m_Weights = new PathfindWeights(1f, 1f, 1f, 1f);
                 pathfindParameters.m_Methods = PathMethod.Pedestrian | PathMethod.Road | PathMethod.Parking;
-                pathfindParameters.m_ParkingTarget = GetParkingSource(entity, ref currentLane);
+                pathfindParameters.m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData);
                 pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
                 pathfindParameters.m_ParkingSize = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData);
                 pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
@@ -942,7 +820,7 @@ namespace RealisticParking
                 pathfindParameters.m_WalkSpeed = 5.555556f;
                 pathfindParameters.m_Weights = new PathfindWeights(1f, 1f, 1f, 1f);
                 pathfindParameters.m_Methods = PathMethod.Road;
-                pathfindParameters.m_ParkingTarget = GetParkingSource(entity, ref currentLane);
+                pathfindParameters.m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData);
                 pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
                 pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
                 parameters = pathfindParameters;

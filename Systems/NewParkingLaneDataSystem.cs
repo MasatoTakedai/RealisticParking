@@ -59,10 +59,11 @@ namespace RealisticParking
             updatedParkingQuery = GetEntityQuery(new EntityQueryDesc
             {
                 All = new ComponentType[1] { ComponentType.ReadOnly<Updated>() },
-                Any = new ComponentType[2]
+                Any = new ComponentType[3]
                 {
                 ComponentType.ReadOnly<Game.Net.ParkingLane>(),
-                ComponentType.ReadOnly<GarageLane>()
+                ComponentType.ReadOnly<GarageLane>(),
+                ComponentType.ReadOnly<Game.Objects.SpawnLocation>()
                 },
                 None = new ComponentType[2]
                 {
@@ -72,10 +73,11 @@ namespace RealisticParking
             }, new EntityQueryDesc
             {
                 All = new ComponentType[1] { ComponentType.ReadOnly<PathfindUpdated>() },
-                Any = new ComponentType[2]
+                Any = new ComponentType[3]
                 {
                 ComponentType.ReadOnly<Game.Net.ParkingLane>(),
-                ComponentType.ReadOnly<GarageLane>()
+                ComponentType.ReadOnly<GarageLane>(),
+                ComponentType.ReadOnly<Game.Objects.SpawnLocation>()
                 },
                 None = new ComponentType[3]
                 {
@@ -106,17 +108,21 @@ namespace RealisticParking
             updateLaneJob.m_CurveType = SystemAPI.GetComponentTypeHandle<Curve>(isReadOnly: true);
             updateLaneJob.m_OwnerType = SystemAPI.GetComponentTypeHandle<Owner>(isReadOnly: true);
             updateLaneJob.m_LaneType = SystemAPI.GetComponentTypeHandle<Lane>(isReadOnly: true);
+            updateLaneJob.m_TransformType =  SystemAPI.GetComponentTypeHandle<Transform>(isReadOnly: true);
             updateLaneJob.m_PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
             updateLaneJob.m_LaneOverlapType = SystemAPI.GetBufferTypeHandle<LaneOverlap>(isReadOnly: true);
             updateLaneJob.m_ParkingLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ParkingLane>(isReadOnly: false);
             updateLaneJob.m_ConnectionLaneType = SystemAPI.GetComponentTypeHandle<Game.Net.ConnectionLane>(isReadOnly: false);
             updateLaneJob.m_GarageLaneType = SystemAPI.GetComponentTypeHandle<GarageLane>(isReadOnly: false);
+            updateLaneJob.m_SpawnLocationType = SystemAPI.GetComponentTypeHandle<Game.Objects.SpawnLocation>(isReadOnly: false);
             updateLaneJob.m_LaneObjectType = SystemAPI.GetBufferTypeHandle<LaneObject>(isReadOnly: false);
             updateLaneJob.m_OwnerData = SystemAPI.GetComponentLookup<Owner>(isReadOnly: true);
             updateLaneJob.m_LaneData = SystemAPI.GetComponentLookup<Lane>(isReadOnly: true);
             updateLaneJob.m_CarLaneData = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true);
             updateLaneJob.m_RoadData = SystemAPI.GetComponentLookup<Road>(isReadOnly: true);
             updateLaneJob.m_ParkedCarData = SystemAPI.GetComponentLookup<ParkedCar>(isReadOnly: true);
+            updateLaneJob.m_ParkedTrainData = SystemAPI.GetComponentLookup<ParkedTrain>(isReadOnly: true);
+            updateLaneJob.m_ControllerData = SystemAPI.GetComponentLookup<Controller>(isReadOnly: true);
             updateLaneJob.m_BorderDistrictData = SystemAPI.GetComponentLookup<BorderDistrict>(isReadOnly: true);
             updateLaneJob.m_DistrictData = SystemAPI.GetComponentLookup<District>(isReadOnly: true);
             updateLaneJob.m_BuildingData = SystemAPI.GetComponentLookup<Building>(isReadOnly: true);
@@ -133,10 +139,12 @@ namespace RealisticParking
             updateLaneJob.m_PrefabBuildingPropertyData = SystemAPI.GetComponentLookup<BuildingPropertyData>(isReadOnly: true);
             updateLaneJob.m_PrefabWorkplaceData = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true);
             updateLaneJob.m_PrefabGeometryData = SystemAPI.GetComponentLookup<NetGeometryData>(isReadOnly: true);
+            updateLaneJob.m_PrefabSpawnLocationData = SystemAPI.GetComponentLookup<SpawnLocationData>(isReadOnly: true);
             updateLaneJob.m_DistrictModifiers = SystemAPI.GetBufferLookup<DistrictModifier>(isReadOnly: true);
             updateLaneJob.m_BuildingModifiers = SystemAPI.GetBufferLookup<BuildingModifier>(isReadOnly: true);
             updateLaneJob.m_InstalledUpgrades = SystemAPI.GetBufferLookup<InstalledUpgrade>(isReadOnly: true);
             updateLaneJob.m_SubLanes = SystemAPI.GetBufferLookup<Game.Net.SubLane>(isReadOnly: true);
+            updateLaneJob.m_LaneObjects = SystemAPI.GetBufferLookup<LaneObject>(isReadOnly: true);
             updateLaneJob.m_CityModifiers = SystemAPI.GetBufferLookup<CityModifier>(isReadOnly: true);
             updateLaneJob.m_ActivityLocations = SystemAPI.GetBufferLookup<ActivityLocationElement>(isReadOnly: true);
             updateLaneJob.m_City = m_CitySystem.City;
