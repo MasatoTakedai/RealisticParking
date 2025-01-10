@@ -101,6 +101,13 @@ namespace RealisticParking
             RequireForUpdate(updatedParkingQuery);
         }
 
+        protected override void OnStartRunning()
+        {
+            base.OnStartRunning();
+            if (enableParkingMinimums)
+                UpdateGarageCapacities();
+        }
+
         protected override void OnUpdate()
         {
             UpdateLaneDataJob updateLaneJob = default(UpdateLaneDataJob);
