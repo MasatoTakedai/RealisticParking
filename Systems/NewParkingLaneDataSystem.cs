@@ -18,6 +18,7 @@ using Game.Objects;
 using Game.Pathfind;
 using Game.Companies;
 using Unity.Collections;
+using Colossal.Serialization.Entities;
 
 namespace RealisticParking
 {
@@ -101,11 +102,10 @@ namespace RealisticParking
             RequireForUpdate(updatedParkingQuery);
         }
 
-        protected override void OnStartRunning()
+        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
         {
-            base.OnStartRunning();
-            if (enableParkingMinimums)
-                UpdateGarageCapacities();
+            base.OnGameLoadingComplete(purpose, mode);
+            UpdateGarageCapacities();
         }
 
         protected override void OnUpdate()
