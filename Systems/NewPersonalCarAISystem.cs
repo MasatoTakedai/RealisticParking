@@ -35,11 +35,11 @@ namespace RealisticParking
             protected override void OnUpdate()
             {
                 JobHandle dependsOn = JobHandle.CombineDependencies(base.Dependency, m_Dependency);
-                SystemAPI.GetBufferLookup<Resources>().Update(ref base.CheckedStateRef);
-                TransferMoneyJob jobData = default(TransferMoneyJob);
-                jobData.m_Resources = SystemAPI.GetBufferLookup<Resources>();
-                jobData.m_MoneyTransferQueue = m_MoneyTransferQueue;
-                JobHandle jobHandle = IJobExtensions.Schedule(jobData, dependsOn);
+                JobHandle jobHandle = IJobExtensions.Schedule(new TransferMoneyJob
+                {
+                    m_Resources = SystemAPI.GetBufferLookup<Resources>(),
+                    m_MoneyTransferQueue = m_MoneyTransferQueue
+                }, dependsOn);
                 m_MoneyTransferQueue.Dispose(jobHandle);
                 base.Dependency = jobHandle;
             }
@@ -91,8 +91,6 @@ namespace RealisticParking
 
         private CitySystem m_CitySystem;
 
-        private CityStatisticsSystem m_CityStatisticsSystem;
-
         private TimeSystem m_TimeSystem;
 
         private ServiceFeeSystem m_ServiceFeeSystem;
@@ -126,7 +124,6 @@ namespace RealisticParking
             m_SimulationSystem = base.World.GetOrCreateSystemManaged<SimulationSystem>();
             m_PathfindSetupSystem = base.World.GetOrCreateSystemManaged<PathfindSetupSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
-            m_CityStatisticsSystem = base.World.GetOrCreateSystemManaged<CityStatisticsSystem>();
             m_TimeSystem = base.World.GetOrCreateSystemManaged<TimeSystem>();
             m_ServiceFeeSystem = base.World.GetOrCreateSystemManaged<ServiceFeeSystem>();
             m_Actions = base.World.GetOrCreateSystemManaged<Actions>();
@@ -154,69 +151,69 @@ namespace RealisticParking
             m_VehicleQuery.ResetFilter();
             m_VehicleQuery.SetSharedComponentFilter(new UpdateFrame(index));
             m_Actions.m_MoneyTransferQueue = new NativeQueue<MoneyTransfer>(Allocator.TempJob);
-            PersonalCarTickJob jobData = default(PersonalCarTickJob);
-            jobData.m_EntityType = SystemAPI.GetEntityTypeHandle();
-            jobData.m_UnspawnedType = SystemAPI.GetComponentTypeHandle<Unspawned>(isReadOnly: true);
-            jobData.m_PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true);
-            jobData.m_LayoutElementType = SystemAPI.GetBufferTypeHandle<LayoutElement>(isReadOnly: true);
-            jobData.m_PersonalCarType = SystemAPI.GetComponentTypeHandle<Game.Vehicles.PersonalCar>(isReadOnly: false);
-            jobData.m_CarType = SystemAPI.GetComponentTypeHandle<Car>(isReadOnly: false);
-            jobData.m_CurrentLaneType = SystemAPI.GetComponentTypeHandle<CarCurrentLane>(isReadOnly: false);
-            jobData.m_CarNavigationLaneType = SystemAPI.GetBufferTypeHandle<CarNavigationLane>(isReadOnly: false);
-            jobData.m_EntityLookup = SystemAPI.GetEntityStorageInfoLookup();
-            jobData.m_ParkedCarData = SystemAPI.GetComponentLookup<ParkedCar>(isReadOnly: true);
-            jobData.m_OwnerData = SystemAPI.GetComponentLookup<Owner>(isReadOnly: true);
-            jobData.m_SpawnLocationData = SystemAPI.GetComponentLookup<Game.Objects.SpawnLocation>(isReadOnly: true);
-            jobData.m_UnspawnedData = SystemAPI.GetComponentLookup<Unspawned>(isReadOnly: true);
-            jobData.m_PrefabCarData = SystemAPI.GetComponentLookup<CarData>(isReadOnly: true);
-            jobData.m_PrefabRefData = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true);
-            jobData.m_PrefabParkingLaneData = SystemAPI.GetComponentLookup<ParkingLaneData>(isReadOnly: true);
-            jobData.m_PrefabObjectGeometryData = SystemAPI.GetComponentLookup<ObjectGeometryData>(isReadOnly: true);
-            jobData.m_PrefabCreatureData = SystemAPI.GetComponentLookup<CreatureData>(isReadOnly: true);
-            jobData.m_PrefabHumanData = SystemAPI.GetComponentLookup<HumanData>(isReadOnly: true);
-            jobData.m_PrefabSpawnLocationData = SystemAPI.GetComponentLookup<SpawnLocationData>(isReadOnly: true);
-            jobData.m_PropertyRenterData = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true);
-            jobData.m_CarLaneData = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true);
-            jobData.m_ParkingLaneData = SystemAPI.GetComponentLookup<Game.Net.ParkingLane>(isReadOnly: true);
-            jobData.m_GarageLaneData = SystemAPI.GetComponentLookup<GarageLane>(isReadOnly: true);
-            jobData.m_ConnectionLaneData = SystemAPI.GetComponentLookup<Game.Net.ConnectionLane>(isReadOnly: true);
-            jobData.m_CurveData = SystemAPI.GetComponentLookup<Curve>(isReadOnly: true);
-            jobData.m_SlaveLaneData = SystemAPI.GetComponentLookup<SlaveLane>(isReadOnly: true);
-            jobData.m_ResidentData = SystemAPI.GetComponentLookup<Game.Creatures.Resident>(isReadOnly: true);
-            jobData.m_DivertData = SystemAPI.GetComponentLookup<Divert>(isReadOnly: true);
-            jobData.m_CurrentVehicleData = SystemAPI.GetComponentLookup<CurrentVehicle>(isReadOnly: true);
-            jobData.m_CitizenData = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true);
-            jobData.m_HouseholdMemberData = SystemAPI.GetComponentLookup<HouseholdMember>(isReadOnly: true);
-            jobData.m_HouseholdData = SystemAPI.GetComponentLookup<Household>(isReadOnly: true);
-            jobData.m_WorkerData = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true);
-            jobData.m_TravelPurposeData = SystemAPI.GetComponentLookup<TravelPurpose>(isReadOnly: true);
-            jobData.m_MovingAwayData = SystemAPI.GetComponentLookup<MovingAway>(isReadOnly: true);
-            jobData.m_Passengers = SystemAPI.GetBufferLookup<Passenger>(isReadOnly: true);
-            jobData.m_LaneObjects = SystemAPI.GetBufferLookup<LaneObject>(isReadOnly: true);
-            jobData.m_LaneOverlaps = SystemAPI.GetBufferLookup<LaneOverlap>(isReadOnly: true);
-            jobData.m_SubLanes = SystemAPI.GetBufferLookup<Game.Net.SubLane>(isReadOnly: true);
-            jobData.m_HouseholdCitizens = SystemAPI.GetBufferLookup<HouseholdCitizen>(isReadOnly: true);
-            jobData.m_TargetData = SystemAPI.GetComponentLookup<Target>(isReadOnly: true);
-            jobData.m_PathOwnerData = SystemAPI.GetComponentLookup<PathOwner>(isReadOnly: true);
-            jobData.m_PathElements = SystemAPI.GetBufferLookup<PathElement>(isReadOnly: false);
-            jobData.m_RandomSeed = RandomSeed.Next();
-            jobData.m_City = m_CitySystem.City;
-            jobData.m_TimeOfDay = m_TimeSystem.normalizedTime;
-            jobData.m_MovingToParkedCarRemoveTypes = m_MovingToParkedCarRemoveTypes;
-            jobData.m_MovingToParkedCarAddTypes = m_MovingToParkedCarAddTypes;
-            jobData.m_CommandBuffer = m_EndFrameBarrier.CreateCommandBuffer().AsParallelWriter();
-            jobData.m_PathfindQueue = m_PathfindSetupSystem.GetQueue(this, 64).AsParallelWriter();
-            jobData.m_MoneyTransferQueue = m_Actions.m_MoneyTransferQueue.AsParallelWriter();
-            jobData.m_StatisticsEventQueue = m_CityStatisticsSystem.GetStatisticsEventQueue(out var deps).AsParallelWriter();
-            jobData.m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out var deps2).AsParallelWriter();
-            jobData.garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true);
-            jobData.enableRerouteLimit = this.enableRerouteLimit;
-            jobData.rerouteLimit = this.rerouteLimit;
-            jobData.enableDemandSystem = this.enableDemandSystem;
-            JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(jobData, m_VehicleQuery, JobHandle.CombineDependencies(base.Dependency, deps, deps2));
+            JobHandle deps;
+            JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(new PersonalCarTickJob
+            {
+                m_EntityType = SystemAPI.GetEntityTypeHandle(),
+                m_UnspawnedType = SystemAPI.GetComponentTypeHandle<Unspawned>(isReadOnly: true),
+                m_PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true),
+                m_LayoutElementType = SystemAPI.GetBufferTypeHandle<LayoutElement>(isReadOnly: true),
+                m_PersonalCarType = SystemAPI.GetComponentTypeHandle<Game.Vehicles.PersonalCar>(isReadOnly: false),
+                m_CarType = SystemAPI.GetComponentTypeHandle<Car>(isReadOnly: false),
+                m_CurrentLaneType = SystemAPI.GetComponentTypeHandle<CarCurrentLane>(isReadOnly: false),
+                m_CarNavigationLaneType = SystemAPI.GetBufferTypeHandle<CarNavigationLane>(isReadOnly: false),
+                m_EntityLookup = SystemAPI.GetEntityStorageInfoLookup(),
+                m_ParkedCarData = SystemAPI.GetComponentLookup<ParkedCar>(isReadOnly: true),
+                m_OwnerData = SystemAPI.GetComponentLookup<Owner>(isReadOnly: true),
+                m_SpawnLocationData = SystemAPI.GetComponentLookup<Game.Objects.SpawnLocation>(isReadOnly: true),
+                m_UnspawnedData = SystemAPI.GetComponentLookup<Unspawned>(isReadOnly: true),
+                m_PrefabCarData = SystemAPI.GetComponentLookup<CarData>(isReadOnly: true),
+                m_PrefabRefData = SystemAPI.GetComponentLookup<PrefabRef>(isReadOnly: true),
+                m_PrefabParkingLaneData = SystemAPI.GetComponentLookup<ParkingLaneData>(isReadOnly: true),
+                m_PrefabObjectGeometryData = SystemAPI.GetComponentLookup<ObjectGeometryData>(isReadOnly: true),
+                m_PrefabCreatureData = SystemAPI.GetComponentLookup<CreatureData>(isReadOnly: true),
+                m_PrefabHumanData = SystemAPI.GetComponentLookup<HumanData>(isReadOnly: true),
+                m_PrefabSpawnLocationData = SystemAPI.GetComponentLookup<SpawnLocationData>(isReadOnly: true),
+                m_PropertyRenterData = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true),
+                m_CarLaneData = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true),
+                m_ParkingLaneData = SystemAPI.GetComponentLookup<Game.Net.ParkingLane>(isReadOnly: true),
+                m_GarageLaneData = SystemAPI.GetComponentLookup<GarageLane>(isReadOnly: true),
+                m_ConnectionLaneData = SystemAPI.GetComponentLookup<Game.Net.ConnectionLane>(isReadOnly: true),
+                m_CurveData = SystemAPI.GetComponentLookup<Curve>(isReadOnly: true),
+                m_SlaveLaneData = SystemAPI.GetComponentLookup<SlaveLane>(isReadOnly: true),
+                m_ResidentData = SystemAPI.GetComponentLookup<Game.Creatures.Resident>(isReadOnly: true),
+                m_DivertData = SystemAPI.GetComponentLookup<Divert>(isReadOnly: true),
+                m_CurrentVehicleData = SystemAPI.GetComponentLookup<CurrentVehicle>(isReadOnly: true),
+                m_CitizenData = SystemAPI.GetComponentLookup<Citizen>(isReadOnly: true),
+                m_HouseholdMemberData = SystemAPI.GetComponentLookup<HouseholdMember>(isReadOnly: true),
+                m_HouseholdData = SystemAPI.GetComponentLookup<Household>(isReadOnly: true),
+                m_WorkerData = SystemAPI.GetComponentLookup<Worker>(isReadOnly: true),
+                m_TravelPurposeData = SystemAPI.GetComponentLookup<TravelPurpose>(isReadOnly: true),
+                m_MovingAwayData = SystemAPI.GetComponentLookup<MovingAway>(isReadOnly: true),
+                m_Passengers = SystemAPI.GetBufferLookup<Passenger>(isReadOnly: true),
+                m_LaneObjects = SystemAPI.GetBufferLookup<LaneObject>(isReadOnly: true),
+                m_LaneOverlaps = SystemAPI.GetBufferLookup<LaneOverlap>(isReadOnly: true),
+                m_SubLanes = SystemAPI.GetBufferLookup<Game.Net.SubLane>(isReadOnly: true),
+                m_HouseholdCitizens = SystemAPI.GetBufferLookup<HouseholdCitizen>(isReadOnly: true),
+                m_TargetData = SystemAPI.GetComponentLookup<Target>(isReadOnly: true),
+                m_PathOwnerData = SystemAPI.GetComponentLookup<PathOwner>(isReadOnly: true),
+                m_PathElements = SystemAPI.GetBufferLookup<PathElement>(isReadOnly: false),
+                m_RandomSeed = RandomSeed.Next(),
+                m_City = m_CitySystem.City,
+                m_TimeOfDay = m_TimeSystem.normalizedTime,
+                m_MovingToParkedCarRemoveTypes = m_MovingToParkedCarRemoveTypes,
+                m_MovingToParkedCarAddTypes = m_MovingToParkedCarAddTypes,
+                m_CommandBuffer = m_EndFrameBarrier.CreateCommandBuffer().AsParallelWriter(),
+                m_PathfindQueue = m_PathfindSetupSystem.GetQueue(this, 64).AsParallelWriter(),
+                m_MoneyTransferQueue = m_Actions.m_MoneyTransferQueue.AsParallelWriter(),
+                m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out deps).AsParallelWriter(),
+                garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true),
+                enableRerouteLimit = this.enableRerouteLimit,
+                rerouteLimit = this.rerouteLimit,
+                enableDemandSystem = this.enableDemandSystem
+            }, m_VehicleQuery, JobHandle.CombineDependencies(base.Dependency, deps));
             m_PathfindSetupSystem.AddQueueWriter(jobHandle);
             m_EndFrameBarrier.AddJobHandleForProducer(jobHandle);
-            m_CityStatisticsSystem.AddWriter(jobHandle);
             m_ServiceFeeSystem.AddQueueWriter(jobHandle);
             m_Actions.m_Dependency = jobHandle;
             base.Dependency = jobHandle;

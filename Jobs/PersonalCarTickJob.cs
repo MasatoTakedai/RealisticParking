@@ -214,8 +214,6 @@ namespace RealisticParking
 
         public NativeQueue<NewPersonalCarAISystem.MoneyTransfer>.ParallelWriter m_MoneyTransferQueue;
 
-        public NativeQueue<StatisticsEvent>.ParallelWriter m_StatisticsEventQueue;
-
         public NativeQueue<ServiceFeeSystem.FeeEvent>.ParallelWriter m_FeeQueue;
 
         public void Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
@@ -649,12 +647,6 @@ namespace RealisticParking
                                 m_Recipient = m_City,
                                 m_Amount = parkingLane.m_ParkingFee
                             });
-                            m_StatisticsEventQueue.Enqueue(new StatisticsEvent
-                            {
-                                m_Statistic = StatisticType.Income,
-                                m_Change = (int)parkingLane.m_ParkingFee,
-                                m_Parameter = 9
-                            });
                             m_FeeQueue.Enqueue(new ServiceFeeSystem.FeeEvent
                             {
                                 m_Amount = 1f,
@@ -702,7 +694,7 @@ namespace RealisticParking
             if (resetLocation)
             {
                 Entity resetLocation2 = Entity.Null;
-                if (m_HouseholdMemberData.TryGetComponent(personalCar.m_Keeper, out var componentData) && m_PropertyRenterData.TryGetComponent(componentData.m_Household, out var componentData2) && (m_HouseholdData[componentData.m_Household].m_Flags & HouseholdFlags.MovedIn) != 0 && !m_MovingAwayData.HasComponent(componentData.m_Household))
+                if (m_HouseholdMemberData.TryGetComponent(personalCar.m_Keeper, out var componentData) && m_PropertyRenterData.TryGetComponent(componentData.m_Household, out var componentData2) && (m_HouseholdData[componentData.m_Household].m_Flags & HouseholdFlags.MovedIn) != HouseholdFlags.None && !m_MovingAwayData.HasComponent(componentData.m_Household))
                 {
                     resetLocation2 = componentData2.m_Property;
                 }
@@ -733,28 +725,32 @@ namespace RealisticParking
             SetupQueueTarget destination;
             if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
             {
-                PathfindParameters pathfindParameters = default(PathfindParameters);
-                pathfindParameters.m_MaxSpeed = new float2(carData.m_MaxSpeed, 277.77777f);
-                pathfindParameters.m_WalkSpeed = 5.555556f;
-                pathfindParameters.m_Weights = new PathfindWeights(1f, 1f, 1f, 1f);
-                pathfindParameters.m_Methods = PathMethod.Pedestrian | PathMethod.Road | PathMethod.Parking;
-                pathfindParameters.m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData);
-                pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
-                pathfindParameters.m_ParkingSize = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData);
-                pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
-                pathfindParameters.m_SecondaryIgnoredRules = VehicleUtils.GetIgnoredPathfindRulesTaxiDefaults();
-                parameters = pathfindParameters;
-                SetupQueueTarget setupQueueTarget = default(SetupQueueTarget);
-                setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
-                setupQueueTarget.m_Methods = PathMethod.Road | PathMethod.Parking;
-                setupQueueTarget.m_RoadTypes = RoadTypes.Car;
-                origin = setupQueueTarget;
-                setupQueueTarget = default(SetupQueueTarget);
-                setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
-                setupQueueTarget.m_Methods = PathMethod.Pedestrian;
-                setupQueueTarget.m_Entity = target.m_Target;
-                setupQueueTarget.m_RandomCost = 30f;
-                destination = setupQueueTarget;
+                parameters = new PathfindParameters
+                {
+                    m_MaxSpeed = new float2(carData.m_MaxSpeed, 277.77777f),
+                    m_WalkSpeed = 5.555556f,
+                    m_Weights = new PathfindWeights(1f, 1f, 1f, 1f),
+                    m_Methods = (VehicleUtils.GetPathMethods(carData) | PathMethod.Parking | PathMethod.Pedestrian),
+                    m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData),
+                    m_ParkingDelta = currentLane.m_CurvePosition.z,
+                    m_ParkingSize = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData),
+                    m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData),
+                    m_SecondaryIgnoredRules = VehicleUtils.GetIgnoredPathfindRulesTaxiDefaults()
+                };
+                origin = new SetupQueueTarget
+                {
+                    m_Type = SetupTargetType.CurrentLocation,
+                    m_Methods = (VehicleUtils.GetPathMethods(carData) | PathMethod.Parking),
+                    m_RoadTypes = RoadTypes.Car
+                };
+                destination = new SetupQueueTarget
+                {
+
+                    m_Type = SetupTargetType.CurrentLocation,
+                    m_Methods = PathMethod.Pedestrian,
+                    m_Entity = target.m_Target,
+                    m_RandomCost = 30f
+                };
                 Entity entity2 = FindLeader(entity, layout);
                 if (m_ResidentData.HasComponent(entity2))
                 {
@@ -815,26 +811,29 @@ namespace RealisticParking
             }
             else
             {
-                PathfindParameters pathfindParameters = default(PathfindParameters);
-                pathfindParameters.m_MaxSpeed = carData.m_MaxSpeed;
-                pathfindParameters.m_WalkSpeed = 5.555556f;
-                pathfindParameters.m_Weights = new PathfindWeights(1f, 1f, 1f, 1f);
-                pathfindParameters.m_Methods = PathMethod.Road;
-                pathfindParameters.m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData);
-                pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
-                pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
-                parameters = pathfindParameters;
-                SetupQueueTarget setupQueueTarget = default(SetupQueueTarget);
-                setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
-                setupQueueTarget.m_Methods = PathMethod.Road | PathMethod.Parking;
-                setupQueueTarget.m_RoadTypes = RoadTypes.Car;
-                origin = setupQueueTarget;
-                setupQueueTarget = default(SetupQueueTarget);
-                setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
-                setupQueueTarget.m_Methods = PathMethod.Road;
-                setupQueueTarget.m_RoadTypes = RoadTypes.Car;
-                setupQueueTarget.m_Entity = target.m_Target;
-                destination = setupQueueTarget;
+                parameters = new PathfindParameters
+                {
+                    m_MaxSpeed = carData.m_MaxSpeed,
+                    m_WalkSpeed = 5.555556f,
+                    m_Weights = new PathfindWeights(1f, 1f, 1f, 1f),
+                    m_Methods = VehicleUtils.GetPathMethods(carData),
+                    m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData),
+                    m_ParkingDelta = currentLane.m_CurvePosition.z,
+                    m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData)
+                };
+                origin = new SetupQueueTarget
+                {
+                    m_Type = SetupTargetType.CurrentLocation,
+                    m_Methods = (VehicleUtils.GetPathMethods(carData) | PathMethod.Parking),
+                    m_RoadTypes = RoadTypes.Car
+                };
+                destination = new SetupQueueTarget
+                {
+                    m_Type = SetupTargetType.CurrentLocation,
+                    m_Methods = VehicleUtils.GetPathMethods(carData),
+                    m_RoadTypes = RoadTypes.Car,
+                    m_Entity = target.m_Target
+                };
             }
             if (flag)
             {

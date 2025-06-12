@@ -28,7 +28,7 @@ namespace RealisticParking
     public struct UpdateLaneDataJob : IJobChunk
     {
         // custom code start
-        public EntityCommandBuffer.ParallelWriter commandBuffer;
+        public EntityCommandBuffer commandBuffer;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemandLookup;
         [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;
@@ -38,10 +38,10 @@ namespace RealisticParking
         [ReadOnly] public bool enableParkingMinimums;
         [ReadOnly] public int demandTolerance;
         [ReadOnly] public float demandSizePerSpot;
-        [ReadOnly] public float garageSpotsPerResident;
+        [ReadOnly] public float garageSpotsPerHousehold;
         [ReadOnly] public float garageSpotsPerWorker;
 
-        private float CalculateCustomFreeSpace(Entity entity, int unfilteredChunkIndex, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
+        private float CalculateCustomFreeSpace(Entity entity, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float vanillaFreeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
             float customFreeSpace = vanillaFreeSpace;
@@ -63,7 +63,7 @@ namespace RealisticParking
                 if (vanillaFreeSpace < 2)
                 {
                     customFreeSpace = vanillaFreeSpace;
-                    commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                    commandBuffer.RemoveComponent<ParkingDemand>(entity);
                 }
             }
             return customFreeSpace;
@@ -75,7 +75,7 @@ namespace RealisticParking
             int capacity;
             if (enableParkingMinimums)
             {
-                capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerResident);
+                capacity = (int)(buildingData.CountProperties(Game.Zones.AreaType.Residential) * garageSpotsPerHousehold);
                 if ((buildingData.CountProperties(Game.Zones.AreaType.Commercial) > 0 || buildingData.CountProperties(Game.Zones.AreaType.Industrial) > 0)
                     && renterLookup.TryGetBuffer(buildingEntity, out DynamicBuffer<Renter> renters))
                 {
@@ -96,7 +96,7 @@ namespace RealisticParking
         }
 
         // set garage count based on demand and add GarageCount component holding the actual count value
-        private ushort CustomCountGarageVehicles(Entity entity, int unfilteredChunkIndex, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
+        private ushort CustomCountGarageVehicles(Entity entity, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
             ushort vanillaCount = CountVehicles(entity, owner, curve, connectionLane);
             ushort customCount = vanillaCount;
@@ -107,8 +107,9 @@ namespace RealisticParking
                 if (customCount > vanillaCount)
                 {
                     if (!garageCountLookup.HasComponent(entity))
-                        commandBuffer.AddComponent<GarageCount>(unfilteredChunkIndex, entity);
-                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new GarageCount(vanillaCount));
+                        commandBuffer.AddComponent<GarageCount>(entity, new GarageCount(vanillaCount));
+                    else
+                        commandBuffer.SetComponent(entity, new GarageCount(vanillaCount));
                 }
             }
 
@@ -280,7 +281,7 @@ namespace RealisticParking
                     Bounds1 blockedRange = GetBlockedRange(owner, laneData);
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
-                    parkingLane.m_FreeSpace = CalculateCustomFreeSpace(entityNativeArray[i], unfilteredChunkIndex, curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
+                    parkingLane.m_FreeSpace = CalculateCustomFreeSpace(entityNativeArray[i], curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
                     GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
                     if (disabled)
@@ -315,7 +316,7 @@ namespace RealisticParking
                     Game.Net.ConnectionLane connectionLane = nativeArray10[j];
                     connectionLane.m_Flags &= ~(ConnectionLaneFlags.Disabled | ConnectionLaneFlags.AllowEnter | ConnectionLaneFlags.AllowExit);
                     GetParkingStats(owner2, default(Game.Net.ParkingLane), out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
-                    value2.m_VehicleCount = CustomCountGarageVehicles(entity, unfilteredChunkIndex, value2, owner2, curve2, connectionLane);
+                    value2.m_VehicleCount = CustomCountGarageVehicles(entity, value2, owner2, curve2, connectionLane);
                     if (disabled2)
                     {
                         connectionLane.m_Flags |= ConnectionLaneFlags.Disabled;
@@ -344,7 +345,7 @@ namespace RealisticParking
             for (int k = 0; k < nativeArray11.Length; k++)
             {
                 PrefabRef prefabRef2 = nativeArray14[k];
-                if (m_PrefabSpawnLocationData.TryGetComponent(prefabRef2.m_Prefab, out var componentData) && (((componentData.m_RoadTypes & RoadTypes.Helicopter) != 0 && componentData.m_ConnectionType == RouteConnectionType.Air) || componentData.m_ConnectionType == RouteConnectionType.Track))
+                if (m_PrefabSpawnLocationData.TryGetComponent(prefabRef2.m_Prefab, out var componentData) && (((componentData.m_RoadTypes & RoadTypes.Helicopter) != RoadTypes.None && componentData.m_ConnectionType == RouteConnectionType.Air) || componentData.m_ConnectionType == RouteConnectionType.Track))
                 {
                     Entity entity2 = nativeArray12[k];
                     Game.Objects.SpawnLocation spawnLocation = nativeArray11[k];
@@ -592,12 +593,13 @@ namespace RealisticParking
 
         private ushort CountVehicles(Entity entity, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
-            CountVehiclesIterator countVehiclesIterator = default(CountVehiclesIterator);
-            countVehiclesIterator.m_Lane = entity;
-            countVehiclesIterator.m_Bounds = VehicleUtils.GetConnectionParkingBounds(connectionLane, curve.m_Bezier);
-            countVehiclesIterator.m_ParkedCarData = m_ParkedCarData;
-            countVehiclesIterator.m_ControllerData = m_ControllerData;
-            CountVehiclesIterator iterator = countVehiclesIterator;
+            CountVehiclesIterator iterator = new CountVehiclesIterator
+            {
+                m_Lane = entity,
+                m_Bounds = VehicleUtils.GetConnectionParkingBounds(connectionLane, curve.m_Bezier),
+                m_ParkedCarData = m_ParkedCarData,
+                m_ControllerData = m_ControllerData
+            };
             Owner owner2 = owner;
             while (m_OwnerData.HasComponent(owner2.m_Owner))
             {
@@ -632,12 +634,13 @@ namespace RealisticParking
             {
                 case RouteConnectionType.Air:
                     {
-                        CountVehiclesIterator countVehiclesIterator = default(CountVehiclesIterator);
-                        countVehiclesIterator.m_Lane = entity;
-                        countVehiclesIterator.m_Bounds = new Bounds3(transform.m_Position - 1f, transform.m_Position + 1f);
-                        countVehiclesIterator.m_ParkedCarData = m_ParkedCarData;
-                        countVehiclesIterator.m_ControllerData = m_ControllerData;
-                        CountVehiclesIterator iterator = countVehiclesIterator;
+                        CountVehiclesIterator iterator = new CountVehiclesIterator
+                        {
+                            m_Lane = entity,
+                            m_Bounds = new Bounds3(transform.m_Position - 1f, transform.m_Position + 1f),
+                            m_ParkedCarData = m_ParkedCarData,
+                            m_ControllerData = m_ControllerData
+                        };
                         m_MovingObjectSearchTree.Iterate(ref iterator);
                         return (ushort)math.clamp(iterator.m_Result, 0, 65535);
                     }
