@@ -52,10 +52,10 @@ namespace RealisticParking
             {
                 if (settings.GetType() == typeof(Setting))
                 {
-                    this.UpdateSettings((Setting)settings);
+                    this.UpdateSettings((Setting)settings, false);
                 }
             };
-            this.UpdateSettings(Mod.INSTANCE.settings);
+            this.UpdateSettings(Mod.INSTANCE.settings, true);
 
             updatedParkingQuery = GetEntityQuery(new EntityQueryDesc
             {
@@ -178,8 +178,10 @@ namespace RealisticParking
             base.Dependency = jobHandle;
         }
 
-        private void UpdateSettings(Setting settings)
+        private void UpdateSettings(Setting settings, bool init)
         {
+            if (!init && (this.enableParkingMinimums != settings.EnableParkingMins || this.garageSpotsPerHousehold != settings.GarageSpotsPerResProp || this.garageSpotsPerWorker != settings.GarageSpotsPerWorker))
+                UpdateGarageCapacities();
             this.enableParkingMinimums = settings.EnableParkingMins;
             this.garageSpotsPerHousehold = settings.GarageSpotsPerResProp;
             this.garageSpotsPerWorker = settings.GarageSpotsPerWorker;

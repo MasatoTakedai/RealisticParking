@@ -69,16 +69,6 @@ namespace RealisticParking
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideParkingMins))]
         public float GarageSpotsPerWorker { get; set; }
 
-        [SettingsUIButton]
-        [SettingsUISection(MainTab, ParkingMinimumsGroup)]
-        public bool SetGarageCapacitiesButton { set { SetGarageCapacities(); } }
-
-        private void SetGarageCapacities()
-        {
-            if (World.DefaultGameObjectInjectionWorld.IsCreated)
-                World.DefaultGameObjectInjectionWorld.GetOrCreateSystemManaged<NewParkingLaneDataSystem>().UpdateGarageCapacities();
-        }
-
 
         [SettingsUIButton]
         [SettingsUISection(MainTab, ResetGroup)]
@@ -89,10 +79,10 @@ namespace RealisticParking
         {
             EnableInducedDemand = true;
             InducedDemandCooldown = 6000;
-            InducedDemandInitialTolerance = 5;
+            InducedDemandInitialTolerance = 2;
             InducedDemandQueueSizePerSpot = 1.5f;
             EnableRerouteDistance = true;
-            RerouteDistance = 10;
+            RerouteDistance = 5;
             EnableParkingMins = true;
             GarageSpotsPerResProp = 1.2f;
             GarageSpotsPerWorker = 0.5f;
