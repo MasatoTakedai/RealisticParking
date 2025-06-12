@@ -7,39 +7,39 @@
 	<ShortDescription Value="Alters parking behavior to enhance traffic efficiency and realism" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
 	<LongDescription>
-# Realistic Parking Mod
+    # Realistic Parking Mod
 
-Are you tired of your city roads getting gridlocked by inefficient traffic looking for (nonexistent) parking? 
-Tired of cars making erratic u-turns in the middle of your main roads because of a parking reroute? 
-Tired of parking garages for high-rise buildings barely having any parking spots?
+    Are you tired of your city roads getting gridlocked by traffic looking for (nonexistent) parking?
+    Tired of cars making erratic u-turns in the middle of your main roads because of a parking reroute?
+    Tired of parking garages for high-rise buildings barely having any parking spots?
 
-This mod aims to make the parking behavior more realistic and improve traffic efficiency.
+    This mod aims to make the parking behavior more realistic and improve traffic efficiency.
 
-## Features
-* **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars start driving towards a spot, it will become closed off to future pathfinding. This makes it so that there will be a more realistic amount of cars in the city relative to the amount of available parking and keeps cims from parking far from their destination.
-* **Reduced Parking Reroute Distance**: In vanilla, cars can detect an unavailable parking spot up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that number so that cars will only try to find new parking once they are near their target parking spot.
-* **Parking Minimums for Garages**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property. Note that many building assets do not have a parking garage built in, and this mod does not add them in.
-* All features can be disabled if wanted
+    ## Features
+    * **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars start driving towards a spot, it will become closed off to future pathfinding. This makes for a more realistic amount of cars in the city relative to the amount of available parking and keeps cims from parking far from their destination.
+    * **Reduced Parking Reroute Distance**: In vanilla, cars can detect their parking spot getting taken up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that range so that cars will only see if their spot is taken once they are near their target parking spot.
+    * **Parking Minimums for Garages**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property.
+    * All features can be disabled if wanted
 
-## Adding to an existing save
-* This mod can be safely added to an existing save, but it may cause some weird behavior at first. Since the demand system does not affect existing pathfinding requests from before the mod, if you have limited parking in your city, you may see cars flocking to one parking spot before rerouting away. To alleviate this behavior, I recommended that you keep your reroute distance high at first and wait for the these cars to reroute.
-* The garage capacity modification should be set with the button in the settings or else it will take a while to take affect, as it is only updated in-game when a car routes to or leaves the garage.
+    ## Adding to an existing save
+    * This mod can be safely added to an existing save, but it may cause some weird behavior at first. Since the demand system does not affect existing pathfinding requests from before the mod, if you have limited parking in your city, you may see cars flocking to one parking spot before rerouting away. To alleviate this behavior, I recommended that you keep your reroute distance high at first and wait for the these cars to reroute.
 
-## Removing from a save
-* This mod can be safely removed from a save, but the induced demand system does alter some vanilla values, so I recommend disabling the system in the settings and letting it run for a couple seconds before saving and removing the mod. This resets parking availability back to vanilla. If you don't do this, in the small possibility that all cars routing to a parking spot are despawned or deleted, the parking spot may remain closed off to pathfinding forever.
-* The garage capacity system also alters vanilla values, but it will be reset by the vanilla system once the mod is removed.
-* The parking reroute distance system does not affect vanilla values.
+    ## Removing from a save
+    * This mod can be safely removed from a save, but the induced demand system does alter some vanilla values, so I recommend disabling the system in the settings and letting it run for a couple seconds before saving and removing the mod. This resets parking availability back to vanilla. If you don't do this, in the small possibility that all cars routing to a parking spot are despawned or deleted, the parking spot may remain closed off to pathfinding forever.
+    * The garage capacity system also alters vanilla values, but it will be reset by the vanilla system once the mod is removed.
+    * The parking reroute distance system does not affect vanilla values.
 
-## Compatability
-* There are no current known incompatabilities with this mod
+    ## Compatability
+    * There are no current known incompatabilities with this mod.
 
-## Notes
-* Parking garage's vehicle count values may appear bugged, as it will rise and fall without cars entering. This is a limitation of the current implementation, as this count is used in pathfinding and representative of the garage's demand + actual count.
+    ## Notes
+    * Many building assets do not have a parking garage built in, and this mod does not add them in.
+    * Parking garage's vehicle count values may appear bugged, as it will rise and fall without cars entering. This is a limitation of the current implementation, as this count is used in pathfinding and representative of the garage's demand + actual count.
 
-## Credits
-* To krzychu124 for their Scene Explorer mod and mattswarthout for their Cim Route Highlighter mod which I used extensively for development
-* All the lovely mod creators who I stalked their github repos to learn how to set up the code for this mod
-	</LongDescription>
+    ## Credits
+    * To krzychu124 for their Scene Explorer mod and mattswarthout for their Cim Route Highlighter mod which I used extensively for development
+    * All the lovely mod creators who I stalked their github repos to learn how to set up the code for this mod
+  </LongDescription>
 	<!--Thumbnail-->
 	<Thumbnail Value="Properties/Thumbnail.png" />
 	<!--Screenshot, can be set multiple times-->
@@ -50,14 +50,17 @@ This mod aims to make the parking behavior more realistic and improve traffic ef
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/realistic-parking.1698920/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.0.9" />
+	<ModVersion Value="1.1.0" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.2.*" />
+	<GameVersion Value="1.3.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
   <ChangeLog>
-* Small update to automatically apply garage capacity settings on world load
+* Updated for 1.3.3f1
+* Removed need for set garage capacity button
+* Adjusted default values
+* Various performance improvements
   </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
   <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2"/>
