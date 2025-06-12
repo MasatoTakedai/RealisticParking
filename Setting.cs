@@ -151,10 +151,6 @@ namespace RealisticParking
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerWorker)),
                     "The number of garage spots per worker in the property. Non-RICO buildings are not affected. Properties with no garage in the asset are not affected."
                 },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.SetGarageCapacitiesButton)), "Set Garage Capacities" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.SetGarageCapacitiesButton)),
-                    "Set garage capacities based on current settings."
-                },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetButton)), "Reset Settings" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.ResetButton)),
