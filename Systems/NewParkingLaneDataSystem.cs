@@ -102,13 +102,6 @@ namespace RealisticParking
             RequireForUpdate(updatedParkingQuery);
         }
 
-        protected override void OnGameLoadingComplete(Purpose purpose, GameMode mode)
-        {
-            base.OnGameLoadingComplete(purpose, mode);
-            if (mode == GameMode.Game)
-                UpdateGarageCapacities();
-        }
-
         protected override void OnUpdate()
         {
             JobHandle dependencies;
