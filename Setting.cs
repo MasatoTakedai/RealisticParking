@@ -118,7 +118,7 @@ namespace RealisticParking
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Demand Queue Size per Parking Spot" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), 
-                    "The number of cars to be allowed to pathfind to each available parking spot." 
+                    "The number of cars to be allowed to pathfind to each available parking spot. See decription for setting above for more details." 
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Demand Reset Length" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), 
@@ -140,16 +140,16 @@ namespace RealisticParking
                 { m_Setting.GetOptionGroupLocaleID(Setting.ParkingMinimumsGroup), "Parking Minimums" },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableParkingMins)), "Enable Parking Minimums for Garages" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableParkingMins)),
-                    "Enable parking minimums for garages. If enabled, custom garage capacities will replace vanilla values. Vanilla apartments have upwards of 3 spots " +
+                    "Enable parking minimums for garages. If enabled, custom garage capacities will replace vanilla values. Vanilla apartments have up to 3 spots " +
                     "and offices have around 30."
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerResProp)), "Garage Spots per Household" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerResProp)), 
-                    "The number of garage spots per household in the apartment. Apartments with no garage in the asset are not affected." 
+                    "The number of garage spots per household in residential properties. Properties with no garage in the asset are not affected." 
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.GarageSpotsPerWorker)), "Garage Spots per Worker" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.GarageSpotsPerWorker)),
-                    "The number of garage spots per worker in the property. Non-RICO buildings are not affected. Properties with no garage in the asset are not affected."
+                    "The number of garage spots per worker in commericial/office properties. Non-RICO buildings are not affected. Properties with no garage in the asset are not affected."
                 },
 
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.ResetButton)), "Reset Settings" },
