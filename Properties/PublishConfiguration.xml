@@ -25,9 +25,7 @@ This mod aims to make the parking behavior more realistic and improve traffic ef
 * This mod can be safely added to an existing save, but it may cause some weird behavior at first. Since the demand system does not affect existing pathfinding requests from before the mod, if you have limited parking in your city, you may see cars flocking to one parking spot before rerouting away. To alleviate this behavior, I recommended that you keep your reroute distance high at first and wait for the these cars to reroute.
 
 ## Removing from a save
-* This mod can be safely removed from a save, but the induced demand system does alter some vanilla values, so I recommend disabling the system in the settings and letting it run for a couple seconds before saving and removing the mod. This resets parking availability back to vanilla. If you don't do this, in the small possibility that all cars routing to a parking spot are despawned or deleted, the parking spot may remain closed off to pathfinding forever.
-* The garage capacity system also alters vanilla values, but it will be reset by the vanilla system once the mod is removed.
-* The parking reroute distance system does not affect vanilla values.
+* This mod can be safely removed from a save, as while some features overwrite vanilla values, they should be reset to their vanilla values on load by the game.
 
 ## Compatability
 * There are no current known incompatabilities with this mod.
