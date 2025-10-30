@@ -282,7 +282,7 @@ namespace RealisticParking
                     parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
                     laneObjects.AsNativeArray().Sort();
                     parkingLane.m_FreeSpace = CalculateCustomFreeSpace(entityNativeArray[i], curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-                    GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
+                    GetParkingStats(owner, parkingLane, noRestriction: false, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
                     parkingLane.m_TaxiFee = taxiFee;
                     if (disabled)
                     {
@@ -315,7 +315,8 @@ namespace RealisticParking
                     GarageLane value2 = nativeArray6[j];
                     Game.Net.ConnectionLane connectionLane = nativeArray10[j];
                     connectionLane.m_Flags &= ~(ConnectionLaneFlags.Disabled | ConnectionLaneFlags.AllowEnter | ConnectionLaneFlags.AllowExit);
-                    GetParkingStats(owner2, default(Game.Net.ParkingLane), out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
+                    bool noRestriction = (connectionLane.m_Flags & ConnectionLaneFlags.NoRestriction) != 0;
+                    GetParkingStats(owner2, default(Game.Net.ParkingLane), noRestriction, out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
                     value2.m_VehicleCount = CustomCountGarageVehicles(entity, value2, owner2, curve2, connectionLane);
                     if (disabled2)
                     {
@@ -345,7 +346,7 @@ namespace RealisticParking
             for (int k = 0; k < nativeArray11.Length; k++)
             {
                 PrefabRef prefabRef2 = nativeArray14[k];
-                if (m_PrefabSpawnLocationData.TryGetComponent(prefabRef2.m_Prefab, out var componentData) && (((componentData.m_RoadTypes & RoadTypes.Helicopter) != RoadTypes.None && componentData.m_ConnectionType == RouteConnectionType.Air) || componentData.m_ConnectionType == RouteConnectionType.Track))
+                if (m_PrefabSpawnLocationData.TryGetComponent(prefabRef2.m_Prefab, out var componentData) && (((componentData.m_RoadTypes & RoadTypes.Helicopter) != 0 && componentData.m_ConnectionType == RouteConnectionType.Air) || componentData.m_ConnectionType == RouteConnectionType.Track))
                 {
                     Entity entity2 = nativeArray12[k];
                     Game.Objects.SpawnLocation spawnLocation = nativeArray11[k];
@@ -361,85 +362,6 @@ namespace RealisticParking
                     nativeArray11[k] = spawnLocation;
                 }
             }
-
-
-            /*            NativeArray<Curve> nativeArray = chunk.GetNativeArray(ref m_CurveType);
-                        NativeArray<Owner> nativeArray2 = chunk.GetNativeArray(ref m_OwnerType);
-                        NativeArray<Game.Net.ParkingLane> nativeArray3 = chunk.GetNativeArray(ref m_ParkingLaneType);
-                        NativeArray<Entity> nativeArray6 = chunk.GetNativeArray(m_EntityType);
-                        if (nativeArray3.Length != 0)
-                        {
-                            NativeArray<Lane> nativeArray4 = chunk.GetNativeArray(ref m_LaneType);
-                            NativeArray<PrefabRef> nativeArray5 = chunk.GetNativeArray(ref m_PrefabRefType);
-                            BufferAccessor<LaneObject> bufferAccessor = chunk.GetBufferAccessor(ref m_LaneObjectType);
-                            BufferAccessor<LaneOverlap> bufferAccessor2 = chunk.GetBufferAccessor(ref m_LaneOverlapType);
-                            ushort taxiFee = 0;
-                            if (m_City != Entity.Null && CityUtils.CheckOption(m_CityData[m_City], CityOption.PaidTaxiStart))
-                            {
-                                float value = 0f;
-                                CityUtils.ApplyModifier(ref value, m_CityModifiers[m_City], CityModifierType.TaxiStartingFee);
-                                taxiFee = (ushort)math.clamp(Mathf.RoundToInt(value), 0, 65535);
-                            }
-                            for (int i = 0; i < nativeArray3.Length; i++)
-                            {
-                                Curve curve = nativeArray[i];
-                                Owner owner = nativeArray2[i];
-                                Lane laneData = nativeArray4[i];
-                                Game.Net.ParkingLane parkingLane = nativeArray3[i];
-                                PrefabRef prefabRef = nativeArray5[i];
-                                DynamicBuffer<LaneObject> laneObjects = bufferAccessor[i];
-                                DynamicBuffer<LaneOverlap> laneOverlaps = bufferAccessor2[i];
-                                ParkingLaneData parkingLaneData = m_ParkingLaneData[prefabRef.m_Prefab];
-                                Bounds1 blockedRange = GetBlockedRange(owner, laneData);
-                                parkingLane.m_Flags &= ~(ParkingLaneFlags.ParkingDisabled | ParkingLaneFlags.AllowEnter | ParkingLaneFlags.AllowExit);
-                                laneObjects.AsNativeArray().Sort();
-                                parkingLane.m_FreeSpace = CalculateCustomFreeSpace(nativeArray6[i], unfilteredChunkIndex, curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-                                GetParkingStats(owner, parkingLane, out parkingLane.m_AccessRestriction, out var _, out parkingLane.m_ParkingFee, out parkingLane.m_ComfortFactor, out var disabled, out var allowEnter, out var allowExit);
-                                parkingLane.m_TaxiFee = taxiFee;
-                                if (disabled)
-                                {
-                                    parkingLane.m_Flags |= ParkingLaneFlags.ParkingDisabled;
-                                }
-                                if (allowEnter)
-                                {
-                                    parkingLane.m_Flags |= ParkingLaneFlags.AllowEnter;
-                                }
-                                if (allowExit)
-                                {
-                                    parkingLane.m_Flags |= ParkingLaneFlags.AllowExit;
-                                }
-                                nativeArray3[i] = parkingLane;
-                            }
-                            return;
-                        }
-                        NativeArray<GarageLane> nativeArray7 = chunk.GetNativeArray(ref m_GarageLaneType);
-                        NativeArray<Game.Net.ConnectionLane> nativeArray8 = chunk.GetNativeArray(ref m_ConnectionLaneType);
-                        for (int j = 0; j < nativeArray7.Length; j++)
-                        {
-                            Entity entity = nativeArray6[j];
-                            Curve curve2 = nativeArray[j];
-                            Owner owner2 = nativeArray2[j];
-                            GarageLane value2 = nativeArray7[j];
-                            Game.Net.ConnectionLane connectionLane = nativeArray8[j];
-                            connectionLane.m_Flags &= ~(ConnectionLaneFlags.Disabled | ConnectionLaneFlags.AllowEnter | ConnectionLaneFlags.AllowExit);
-                            GetParkingStats(owner2, default(Game.Net.ParkingLane), out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
-                            value2.m_VehicleCount = CountVehicles(entity, owner2, curve2, connectionLane);
-                            if (disabled2)
-                            {
-                                connectionLane.m_Flags |= ConnectionLaneFlags.Disabled;
-                            }
-                            if (allowEnter2)
-                            {
-                                connectionLane.m_Flags |= ConnectionLaneFlags.AllowEnter;
-                            }
-                            if (allowExit2)
-                            {
-                                connectionLane.m_Flags |= ConnectionLaneFlags.AllowExit;
-                            }
-                            nativeArray7[j] = value2;
-                            nativeArray8[j] = connectionLane;
-                        }
-            */
         }
 
         private Bounds1 GetBlockedRange(Owner owner, Lane laneData)
@@ -468,7 +390,7 @@ namespace RealisticParking
             return result;
         }
 
-        private void GetParkingStats(Owner owner, Game.Net.ParkingLane parkingLane, out Entity restriction, out ushort garageCapacity, out ushort fee, out ushort comfort, out bool disabled, out bool allowEnter, out bool allowExit)
+        private void GetParkingStats(Owner owner, Game.Net.ParkingLane parkingLane, bool noRestriction, out Entity restriction, out ushort garageCapacity, out ushort fee, out ushort comfort, out bool disabled, out bool allowEnter, out bool allowExit)
         {
             restriction = Entity.Null;
             garageCapacity = 0;
@@ -478,19 +400,25 @@ namespace RealisticParking
             allowEnter = false;
             allowExit = false;
             Owner owner2 = owner;
+            Game.Prefabs.BuildingFlags buildingFlags = Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar | Game.Prefabs.BuildingFlags.RestrictedParking | Game.Prefabs.BuildingFlags.RestrictedTrack;
             Owner componentData;
             while (m_OwnerData.TryGetComponent(owner2.m_Owner, out componentData))
             {
+                if (m_BuildingData.HasComponent(owner2.m_Owner))
+                {
+                    PrefabRef prefabRef = m_PrefabRefData[owner2.m_Owner];
+                    buildingFlags &= m_PrefabBuildingData[prefabRef.m_Prefab].m_Flags;
+                }
                 owner2 = componentData;
             }
             if (m_BuildingData.HasComponent(owner2.m_Owner))
             {
                 ParkingFacilityData parkingFacilityData = default(ParkingFacilityData);
                 bool flag = false;
-                PrefabRef prefabRef = m_PrefabRefData[owner2.m_Owner];
-                if (m_PrefabParkingFacilityData.HasComponent(prefabRef.m_Prefab))
+                PrefabRef prefabRef2 = m_PrefabRefData[owner2.m_Owner];
+                if (m_PrefabParkingFacilityData.HasComponent(prefabRef2.m_Prefab))
                 {
-                    parkingFacilityData = m_PrefabParkingFacilityData[prefabRef.m_Prefab];
+                    parkingFacilityData = m_PrefabParkingFacilityData[prefabRef2.m_Prefab];
                     flag = true;
                 }
                 if (m_InstalledUpgrades.TryGetBuffer(owner2.m_Owner, out var bufferData))
@@ -500,10 +428,10 @@ namespace RealisticParking
                         InstalledUpgrade installedUpgrade = bufferData[i];
                         if (!BuildingUtils.CheckOption(installedUpgrade, BuildingOption.Inactive))
                         {
-                            PrefabRef prefabRef2 = m_PrefabRefData[installedUpgrade.m_Upgrade];
-                            if (m_PrefabParkingFacilityData.HasComponent(prefabRef2.m_Prefab))
+                            PrefabRef prefabRef3 = m_PrefabRefData[installedUpgrade.m_Upgrade];
+                            if (m_PrefabParkingFacilityData.HasComponent(prefabRef3.m_Prefab))
                             {
-                                parkingFacilityData.Combine(m_PrefabParkingFacilityData[prefabRef2.m_Prefab]);
+                                parkingFacilityData.Combine(m_PrefabParkingFacilityData[prefabRef3.m_Prefab]);
                                 flag = true;
                             }
                         }
@@ -516,7 +444,8 @@ namespace RealisticParking
                 }
                 if (m_PrefabRefData.TryGetComponent(entity, out var componentData3) && m_PrefabBuildingData.TryGetComponent(componentData3.m_Prefab, out var componentData4))
                 {
-                    if (m_RoadData.HasComponent(owner.m_Owner))
+                    componentData4.m_Flags &= buildingFlags;
+                    if (noRestriction || m_RoadData.HasComponent(owner.m_Owner))
                     {
                         componentData4.m_Flags &= ~(Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar);
                     }
@@ -535,11 +464,11 @@ namespace RealisticParking
                     parkingFacilityData.m_GarageMarkerCapacity = 2;
                     parkingFacilityData.m_ComfortFactor = 0.8f;
                     WorkplaceData componentData8;
-                    if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef.m_Prefab, out var componentData7))
+                    if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef2.m_Prefab, out var componentData7))
                     {
                         parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(entity, componentData7));
                     }
-                    else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef.m_Prefab, out componentData8))
+                    else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef2.m_Prefab, out componentData8))
                     {
                         parkingFacilityData.m_GarageMarkerCapacity = math.max(2, componentData8.m_MaxWorkers / 20);
                     }
@@ -593,13 +522,12 @@ namespace RealisticParking
 
         private ushort CountVehicles(Entity entity, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
         {
-            CountVehiclesIterator iterator = new CountVehiclesIterator
-            {
-                m_Lane = entity,
-                m_Bounds = VehicleUtils.GetConnectionParkingBounds(connectionLane, curve.m_Bezier),
-                m_ParkedCarData = m_ParkedCarData,
-                m_ControllerData = m_ControllerData
-            };
+            CountVehiclesIterator countVehiclesIterator = default(CountVehiclesIterator);
+            countVehiclesIterator.m_Lane = entity;
+            countVehiclesIterator.m_Bounds = VehicleUtils.GetConnectionParkingBounds(connectionLane, curve.m_Bezier);
+            countVehiclesIterator.m_ParkedCarData = m_ParkedCarData;
+            countVehiclesIterator.m_ControllerData = m_ControllerData;
+            CountVehiclesIterator iterator = countVehiclesIterator;
             Owner owner2 = owner;
             while (m_OwnerData.HasComponent(owner2.m_Owner))
             {
@@ -634,13 +562,12 @@ namespace RealisticParking
             {
                 case RouteConnectionType.Air:
                     {
-                        CountVehiclesIterator iterator = new CountVehiclesIterator
-                        {
-                            m_Lane = entity,
-                            m_Bounds = new Bounds3(transform.m_Position - 1f, transform.m_Position + 1f),
-                            m_ParkedCarData = m_ParkedCarData,
-                            m_ControllerData = m_ControllerData
-                        };
+                        CountVehiclesIterator countVehiclesIterator = default(CountVehiclesIterator);
+                        countVehiclesIterator.m_Lane = entity;
+                        countVehiclesIterator.m_Bounds = new Bounds3(transform.m_Position - 1f, transform.m_Position + 1f);
+                        countVehiclesIterator.m_ParkedCarData = m_ParkedCarData;
+                        countVehiclesIterator.m_ControllerData = m_ControllerData;
+                        CountVehiclesIterator iterator = countVehiclesIterator;
                         m_MovingObjectSearchTree.Iterate(ref iterator);
                         return (ushort)math.clamp(iterator.m_Result, 0, 65535);
                     }

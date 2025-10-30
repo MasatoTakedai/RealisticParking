@@ -35,11 +35,10 @@ namespace RealisticParking
             protected override void OnUpdate()
             {
                 JobHandle dependsOn = JobHandle.CombineDependencies(base.Dependency, m_Dependency);
-                JobHandle jobHandle = IJobExtensions.Schedule(new TransferMoneyJob
-                {
-                    m_Resources = SystemAPI.GetBufferLookup<Resources>(),
-                    m_MoneyTransferQueue = m_MoneyTransferQueue
-                }, dependsOn);
+                TransferMoneyJob jobData = default(TransferMoneyJob);
+                jobData.m_Resources = SystemAPI.GetBufferLookup<Resources>();
+                jobData.m_MoneyTransferQueue = m_MoneyTransferQueue;
+                JobHandle jobHandle = IJobExtensions.Schedule(jobData, dependsOn);
                 m_MoneyTransferQueue.Dispose(jobHandle);
                 base.Dependency = jobHandle;
             }
