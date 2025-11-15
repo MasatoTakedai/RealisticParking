@@ -9,7 +9,7 @@ using Unity.Entities;
 
 namespace RealisticParking
 {
-    [FileLocation(nameof(RealisticParking))]
+    [FileLocation("ModsSettings/RealisticParking/RealisticParking")]
     [SettingsUIShowGroupName(InducedDemandGroup, RerouteDistanceGroup, ParkingMinimumsGroup)]
     public class Setting : ModSetting
     {
