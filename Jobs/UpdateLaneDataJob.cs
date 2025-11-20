@@ -174,6 +174,9 @@ namespace RealisticParking
         public ComponentLookup<BorderDistrict> m_BorderDistrictData;
 
         [ReadOnly]
+        public ComponentLookup<CurrentDistrict> m_CurrentDistrictData;
+
+        [ReadOnly]
         public ComponentLookup<District> m_DistrictData;
 
         [ReadOnly]
@@ -220,6 +223,9 @@ namespace RealisticParking
 
         [ReadOnly]
         public ComponentLookup<SpawnLocationData> m_PrefabSpawnLocationData;
+
+        [ReadOnly]
+        public ComponentLookup<TransportStopData> m_PrefabTransportStopData;
 
         [ReadOnly]
         public BufferLookup<DistrictModifier> m_DistrictModifiers;
@@ -393,107 +399,116 @@ namespace RealisticParking
         private void GetParkingStats(Owner owner, Game.Net.ParkingLane parkingLane, bool noRestriction, out Entity restriction, out ushort garageCapacity, out ushort fee, out ushort comfort, out bool disabled, out bool allowEnter, out bool allowExit)
         {
             restriction = Entity.Null;
-            garageCapacity = 0;
-            fee = 0;
-            comfort = 0;
-            disabled = false;
-            allowEnter = false;
-            allowExit = false;
-            Owner owner2 = owner;
-            Game.Prefabs.BuildingFlags buildingFlags = Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar | Game.Prefabs.BuildingFlags.RestrictedParking | Game.Prefabs.BuildingFlags.RestrictedTrack;
-            Owner componentData;
-            while (m_OwnerData.TryGetComponent(owner2.m_Owner, out componentData))
-            {
-                if (m_BuildingData.HasComponent(owner2.m_Owner))
-                {
-                    PrefabRef prefabRef = m_PrefabRefData[owner2.m_Owner];
-                    buildingFlags &= m_PrefabBuildingData[prefabRef.m_Prefab].m_Flags;
-                }
-                owner2 = componentData;
-            }
-            if (m_BuildingData.HasComponent(owner2.m_Owner))
-            {
-                ParkingFacilityData parkingFacilityData = default(ParkingFacilityData);
-                bool flag = false;
-                PrefabRef prefabRef2 = m_PrefabRefData[owner2.m_Owner];
-                if (m_PrefabParkingFacilityData.HasComponent(prefabRef2.m_Prefab))
-                {
-                    parkingFacilityData = m_PrefabParkingFacilityData[prefabRef2.m_Prefab];
-                    flag = true;
-                }
-                if (m_InstalledUpgrades.TryGetBuffer(owner2.m_Owner, out var bufferData))
-                {
-                    for (int i = 0; i < bufferData.Length; i++)
-                    {
-                        InstalledUpgrade installedUpgrade = bufferData[i];
-                        if (!BuildingUtils.CheckOption(installedUpgrade, BuildingOption.Inactive))
-                        {
-                            PrefabRef prefabRef3 = m_PrefabRefData[installedUpgrade.m_Upgrade];
-                            if (m_PrefabParkingFacilityData.HasComponent(prefabRef3.m_Prefab))
-                            {
-                                parkingFacilityData.Combine(m_PrefabParkingFacilityData[prefabRef3.m_Prefab]);
-                                flag = true;
-                            }
-                        }
-                    }
-                }
-                Entity entity = owner2.m_Owner;
-                if (m_AttachmentData.TryGetComponent(entity, out var componentData2) && componentData2.m_Attached != Entity.Null)
-                {
-                    entity = componentData2.m_Attached;
-                }
-                if (m_PrefabRefData.TryGetComponent(entity, out var componentData3) && m_PrefabBuildingData.TryGetComponent(componentData3.m_Prefab, out var componentData4))
-                {
-                    componentData4.m_Flags &= buildingFlags;
-                    if (noRestriction || m_RoadData.HasComponent(owner.m_Owner))
-                    {
-                        componentData4.m_Flags &= ~(Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar);
-                    }
-                    restriction = entity;
-                    allowEnter = (componentData4.m_Flags & (Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar)) == 0;
-                    allowExit = (componentData4.m_Flags & Game.Prefabs.BuildingFlags.RestrictedParking) == 0;
-                }
-                if (m_PrefabRefData.TryGetComponent(owner.m_Owner, out var componentData5) && m_PrefabGeometryData.TryGetComponent(componentData5.m_Prefab, out var componentData6) && (componentData6.m_Flags & Game.Net.GeometryFlags.SubOwner) != 0)
-                {
-                    restriction = Entity.Null;
-                    allowEnter = false;
-                    allowExit = false;
-                }
-                if (!flag)
-                {
-                    parkingFacilityData.m_GarageMarkerCapacity = 2;
-                    parkingFacilityData.m_ComfortFactor = 0.8f;
-                    WorkplaceData componentData8;
-                    if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef2.m_Prefab, out var componentData7))
-                    {
-                        parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(entity, componentData7));
-                    }
-                    else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef2.m_Prefab, out componentData8))
-                    {
-                        parkingFacilityData.m_GarageMarkerCapacity = math.max(2, componentData8.m_MaxWorkers / 20);
-                    }
-                }
-                if (m_ParkingFacilityData.TryGetComponent(owner2.m_Owner, out var componentData9))
-                {
-                    disabled = (componentData9.m_Flags & ParkingFacilityFlags.ParkingSpacesActive) == 0 && (parkingLane.m_Flags & ParkingLaneFlags.VirtualLane) == 0;
-                    parkingFacilityData.m_ComfortFactor = componentData9.m_ComfortFactor;
-                }
-                garageCapacity = (ushort)math.clamp(parkingFacilityData.m_GarageMarkerCapacity, 0, 65535);
-                comfort = (ushort)math.clamp(Mathf.RoundToInt(parkingFacilityData.m_ComfortFactor * 65535f), 0, 65535);
-                fee = GetBuildingParkingFee(owner2.m_Owner);
-            }
-            else if (m_BorderDistrictData.HasComponent(owner.m_Owner))
-            {
-                BorderDistrict borderDistrict = m_BorderDistrictData[owner.m_Owner];
-                if ((parkingLane.m_Flags & ParkingLaneFlags.RightSide) != 0)
-                {
-                    fee = GetDistrictParkingFee(borderDistrict.m_Right);
-                }
-                else
-                {
-                    fee = GetDistrictParkingFee(borderDistrict.m_Left);
-                }
-            }
+			garageCapacity = 0;
+			fee = 0;
+			comfort = 0;
+			disabled = false;
+			allowEnter = false;
+			allowExit = false;
+			Owner owner2 = owner;
+			Game.Prefabs.BuildingFlags buildingFlags = Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar | Game.Prefabs.BuildingFlags.RestrictedParking | Game.Prefabs.BuildingFlags.RestrictedTrack;
+			Owner componentData;
+			while (m_OwnerData.TryGetComponent(owner2.m_Owner, out componentData))
+			{
+				if (m_BuildingData.HasComponent(owner2.m_Owner))
+				{
+					PrefabRef prefabRef = m_PrefabRefData[owner2.m_Owner];
+					buildingFlags &= m_PrefabBuildingData[prefabRef.m_Prefab].m_Flags;
+				}
+				owner2 = componentData;
+			}
+			if (m_BuildingData.HasComponent(owner2.m_Owner))
+			{
+				ParkingFacilityData parkingFacilityData = default(ParkingFacilityData);
+				bool flag = false;
+				PrefabRef prefabRef2 = m_PrefabRefData[owner2.m_Owner];
+				if (m_PrefabParkingFacilityData.HasComponent(prefabRef2.m_Prefab))
+				{
+					parkingFacilityData = m_PrefabParkingFacilityData[prefabRef2.m_Prefab];
+					flag = true;
+				}
+				if (m_InstalledUpgrades.TryGetBuffer(owner2.m_Owner, out var bufferData))
+				{
+					for (int i = 0; i < bufferData.Length; i++)
+					{
+						InstalledUpgrade installedUpgrade = bufferData[i];
+						if (!BuildingUtils.CheckOption(installedUpgrade, BuildingOption.Inactive))
+						{
+							PrefabRef prefabRef3 = m_PrefabRefData[installedUpgrade.m_Upgrade];
+							if (m_PrefabParkingFacilityData.HasComponent(prefabRef3.m_Prefab))
+							{
+								parkingFacilityData.Combine(m_PrefabParkingFacilityData[prefabRef3.m_Prefab]);
+								flag = true;
+							}
+						}
+					}
+				}
+				Entity entity = owner2.m_Owner;
+				if (m_AttachmentData.TryGetComponent(entity, out var componentData2) && componentData2.m_Attached != Entity.Null)
+				{
+					entity = componentData2.m_Attached;
+				}
+				if (m_PrefabRefData.TryGetComponent(entity, out var componentData3) && m_PrefabBuildingData.TryGetComponent(componentData3.m_Prefab, out var componentData4))
+				{
+					componentData4.m_Flags &= buildingFlags;
+					if (noRestriction || m_RoadData.HasComponent(owner.m_Owner))
+					{
+						componentData4.m_Flags &= ~(Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar);
+					}
+					restriction = entity;
+					allowEnter = (componentData4.m_Flags & (Game.Prefabs.BuildingFlags.RestrictedPedestrian | Game.Prefabs.BuildingFlags.RestrictedCar)) == 0;
+					allowExit = (componentData4.m_Flags & Game.Prefabs.BuildingFlags.RestrictedParking) == 0;
+				}
+				if (m_PrefabRefData.TryGetComponent(owner.m_Owner, out var componentData5) && m_PrefabGeometryData.TryGetComponent(componentData5.m_Prefab, out var componentData6) && (componentData6.m_Flags & Game.Net.GeometryFlags.SubOwner) != 0)
+				{
+					restriction = Entity.Null;
+					allowEnter = false;
+					allowExit = false;
+				}
+				if (!flag)
+				{
+					parkingFacilityData.m_GarageMarkerCapacity = 2;
+					parkingFacilityData.m_ComfortFactor = 0.8f;
+					WorkplaceData componentData8;
+					if (m_PrefabBuildingPropertyData.TryGetComponent(prefabRef2.m_Prefab, out var componentData7))
+					{
+						parkingFacilityData.m_GarageMarkerCapacity = math.max(1, ApplyCustomGarageCapacity(entity, componentData7));
+					}
+					else if (m_PrefabWorkplaceData.TryGetComponent(prefabRef2.m_Prefab, out componentData8))
+					{
+						parkingFacilityData.m_GarageMarkerCapacity = math.max(2, componentData8.m_MaxWorkers / 20);
+					}
+				}
+				if (m_ParkingFacilityData.TryGetComponent(owner2.m_Owner, out var componentData9))
+				{
+					disabled = (componentData9.m_Flags & ParkingFacilityFlags.ParkingSpacesActive) == 0 && (parkingLane.m_Flags & ParkingLaneFlags.VirtualLane) == 0;
+					parkingFacilityData.m_ComfortFactor = componentData9.m_ComfortFactor;
+				}
+				garageCapacity = (ushort)math.clamp(parkingFacilityData.m_GarageMarkerCapacity, 0, 65535);
+				comfort = (ushort)math.clamp(Mathf.RoundToInt(parkingFacilityData.m_ComfortFactor * 65535f), 0, 65535);
+				fee = GetBuildingParkingFee(owner2.m_Owner);
+				return;
+			}
+			if (m_PrefabTransportStopData.TryGetComponent(owner2.m_Owner, out var componentData10))
+			{
+				comfort = (ushort)math.clamp(Mathf.RoundToInt(componentData10.m_ComfortFactor * 65535f), 0, 65535);
+			}
+			CurrentDistrict componentData12;
+			if (m_BorderDistrictData.TryGetComponent(owner.m_Owner, out var componentData11))
+			{
+				if ((parkingLane.m_Flags & ParkingLaneFlags.RightSide) != 0)
+				{
+					fee = GetDistrictParkingFee(componentData11.m_Right);
+				}
+				else
+				{
+					fee = GetDistrictParkingFee(componentData11.m_Left);
+				}
+			}
+			else if (m_CurrentDistrictData.TryGetComponent(owner2.m_Owner, out componentData12))
+			{
+				fee = GetDistrictParkingFee(componentData12.m_District);
+			}
         }
 
         private ushort GetDistrictParkingFee(Entity district)

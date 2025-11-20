@@ -155,6 +155,7 @@ namespace RealisticParking
             {
                 m_EntityType = SystemAPI.GetEntityTypeHandle(),
                 m_UnspawnedType = SystemAPI.GetComponentTypeHandle<Unspawned>(isReadOnly: true),
+                m_BicycleType = SystemAPI.GetComponentTypeHandle<Bicycle>(isReadOnly: true),
                 m_PrefabRefType = SystemAPI.GetComponentTypeHandle<PrefabRef>(isReadOnly: true),
                 m_LayoutElementType = SystemAPI.GetBufferTypeHandle<LayoutElement>(isReadOnly: true),
                 m_PersonalCarType = SystemAPI.GetComponentTypeHandle<Game.Vehicles.PersonalCar>(isReadOnly: false),
@@ -174,6 +175,7 @@ namespace RealisticParking
                 m_PrefabHumanData = SystemAPI.GetComponentLookup<HumanData>(isReadOnly: true),
                 m_PrefabSpawnLocationData = SystemAPI.GetComponentLookup<SpawnLocationData>(isReadOnly: true),
                 m_PropertyRenterData = SystemAPI.GetComponentLookup<PropertyRenter>(isReadOnly: true),
+                m_PedestrianLaneData = SystemAPI.GetComponentLookup<Game.Net.PedestrianLane>(isReadOnly: true),
                 m_CarLaneData = SystemAPI.GetComponentLookup<Game.Net.CarLane>(isReadOnly: true),
                 m_ParkingLaneData = SystemAPI.GetComponentLookup<Game.Net.ParkingLane>(isReadOnly: true),
                 m_GarageLaneData = SystemAPI.GetComponentLookup<GarageLane>(isReadOnly: true),

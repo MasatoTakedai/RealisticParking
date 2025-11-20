@@ -18,7 +18,6 @@ using Game.Objects;
 using Game.Pathfind;
 using Game.Companies;
 using Unity.Collections;
-using Colossal.Serialization.Entities;
 
 namespace RealisticParking
 {
@@ -127,6 +126,7 @@ namespace RealisticParking
                 m_ParkedTrainData = SystemAPI.GetComponentLookup<ParkedTrain>(isReadOnly: true),
                 m_ControllerData = SystemAPI.GetComponentLookup<Controller>(isReadOnly: true),
                 m_BorderDistrictData = SystemAPI.GetComponentLookup<BorderDistrict>(isReadOnly: true),
+                m_CurrentDistrictData = SystemAPI.GetComponentLookup<CurrentDistrict>(isReadOnly: true),
                 m_DistrictData = SystemAPI.GetComponentLookup<District>(isReadOnly: true),
                 m_BuildingData = SystemAPI.GetComponentLookup<Building>(isReadOnly: true),
                 m_ParkingFacilityData = SystemAPI.GetComponentLookup<Game.Buildings.ParkingFacility>(isReadOnly: true),
@@ -143,6 +143,7 @@ namespace RealisticParking
                 m_PrefabWorkplaceData = SystemAPI.GetComponentLookup<WorkplaceData>(isReadOnly: true),
                 m_PrefabGeometryData = SystemAPI.GetComponentLookup<NetGeometryData>(isReadOnly: true),
                 m_PrefabSpawnLocationData = SystemAPI.GetComponentLookup<SpawnLocationData>(isReadOnly: true),
+                m_PrefabTransportStopData = SystemAPI.GetComponentLookup<TransportStopData>(isReadOnly: true),
                 m_DistrictModifiers = SystemAPI.GetBufferLookup<DistrictModifier>(isReadOnly: true),
                 m_BuildingModifiers = SystemAPI.GetBufferLookup<BuildingModifier>(isReadOnly: true),
                 m_InstalledUpgrades = SystemAPI.GetBufferLookup<InstalledUpgrade>(isReadOnly: true),

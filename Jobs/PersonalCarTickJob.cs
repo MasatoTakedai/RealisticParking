@@ -72,6 +72,9 @@ namespace RealisticParking
         public ComponentTypeHandle<Unspawned> m_UnspawnedType;
 
         [ReadOnly]
+        public ComponentTypeHandle<Bicycle> m_BicycleType;
+
+        [ReadOnly]
         public ComponentTypeHandle<PrefabRef> m_PrefabRefType;
 
         [ReadOnly]
@@ -123,6 +126,9 @@ namespace RealisticParking
 
         [ReadOnly]
         public ComponentLookup<PropertyRenter> m_PropertyRenterData;
+
+        [ReadOnly]
+        public ComponentLookup<Game.Net.PedestrianLane> m_PedestrianLaneData;
 
         [ReadOnly]
         public ComponentLookup<Game.Net.CarLane> m_CarLaneData;
@@ -226,6 +232,7 @@ namespace RealisticParking
             BufferAccessor<LayoutElement> bufferAccessor = chunk.GetBufferAccessor(ref m_LayoutElementType);
             BufferAccessor<CarNavigationLane> bufferAccessor2 = chunk.GetBufferAccessor(ref m_CarNavigationLaneType);
             bool isUnspawned = chunk.Has(ref m_UnspawnedType);
+            bool isBicycle = chunk.Has(ref m_BicycleType);
             for (int i = 0; i < nativeArray.Length; i++)
             {
                 Entity entity = nativeArray[i];
@@ -242,7 +249,7 @@ namespace RealisticParking
                     layout = bufferAccessor[i];
                 }
                 VehicleUtils.CheckUnspawned(unfilteredChunkIndex, entity, currentLane, isUnspawned, m_CommandBuffer);
-                Tick(unfilteredChunkIndex, entity, prefabRef, layout, navigationLanes, ref personalCar, ref car, ref currentLane, ref pathOwner, ref target);
+                Tick(unfilteredChunkIndex, entity, prefabRef, layout, navigationLanes, isBicycle, ref personalCar, ref car, ref currentLane, ref pathOwner, ref target);
                 m_TargetData[entity] = target;
                 m_PathOwnerData[entity] = pathOwner;
                 nativeArray4[i] = personalCar;
@@ -251,12 +258,12 @@ namespace RealisticParking
             }
         }
 
-        private void Tick(int jobIndex, Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, DynamicBuffer<CarNavigationLane> navigationLanes, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
+        private void Tick(int jobIndex, Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, DynamicBuffer<CarNavigationLane> navigationLanes, bool isBicycle, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
         {
             Random random = m_RandomSeed.GetRandom(entity.Index);
             if (VehicleUtils.ResetUpdatedPath(ref pathOwner))
             {
-                ResetPath(entity, jobIndex, ref random, ref personalCar, ref car, ref currentLane, ref pathOwner);
+                ResetPath(entity, jobIndex, isBicycle, ref random, ref personalCar, ref car, ref currentLane, ref pathOwner);
             }
             if (((personalCar.m_State & (PersonalCarFlags.Transporting | PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) == 0 && !m_EntityLookup.Exists(target.m_Target)) || VehicleUtils.PathfindFailed(pathOwner))
             {
@@ -265,21 +272,21 @@ namespace RealisticParking
                 {
                     if (StopDisembarking(entity, layout, ref personalCar, ref pathOwner))
                     {
-                        ParkCar(jobIndex, entity, layout, resetLocation: true, ref personalCar, ref currentLane);
+                        ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: true, ref personalCar, ref currentLane);
                     }
                     return;
                 }
                 if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
                 {
-                    if (!StartDisembarking(jobIndex, entity, layout, ref personalCar, ref currentLane))
+                    if (!StartDisembarking(jobIndex, entity, layout, ref personalCar, ref currentLane, ref pathOwner))
                     {
-                        ParkCar(jobIndex, entity, layout, resetLocation: true, ref personalCar, ref currentLane);
+                        ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: true, ref personalCar, ref currentLane);
                     }
                     return;
                 }
                 if ((personalCar.m_State & PersonalCarFlags.Boarding) == 0)
                 {
-                    ParkCar(jobIndex, entity, layout, resetLocation: false, ref personalCar, ref currentLane);
+                    ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
                     return;
                 }
                 if (!StopBoarding(entity, layout, navigationLanes, ref personalCar, ref currentLane, ref pathOwner, ref target))
@@ -288,7 +295,43 @@ namespace RealisticParking
                 }
                 if ((personalCar.m_State & PersonalCarFlags.Transporting) == 0)
                 {
-                    ParkCar(jobIndex, entity, layout, resetLocation: false, ref personalCar, ref currentLane);
+                    ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
+                    return;
+                }
+            }
+            else if (VehicleUtils.ParkingSpaceReached(currentLane, pathOwner) || (personalCar.m_State & (PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) != 0)
+            {
+                if ((personalCar.m_State & PersonalCarFlags.Disembarking) != 0)
+                {
+                    if (StopDisembarking(entity, layout, ref personalCar, ref pathOwner))
+                    {
+                        ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
+                    }
+                    return;
+                }
+                if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
+                {
+                    if (!StartDisembarking(jobIndex, entity, layout, ref personalCar, ref currentLane, ref pathOwner))
+                    {
+                        ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
+                    }
+                    return;
+                }
+                if ((personalCar.m_State & PersonalCarFlags.Boarding) == 0)
+                {
+                    if (!StartBoarding(entity, ref personalCar, ref car, ref target))
+                    {
+                        VehicleUtils.DeleteVehicle(m_CommandBuffer, jobIndex, entity, layout);
+                    }
+                    return;
+                }
+                if (!StopBoarding(entity, layout, navigationLanes, ref personalCar, ref currentLane, ref pathOwner, ref target))
+                {
+                    return;
+                }
+                if ((personalCar.m_State & PersonalCarFlags.Transporting) == 0)
+                {
+                    ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
                     return;
                 }
             }
@@ -296,46 +339,20 @@ namespace RealisticParking
             {
                 if (VehicleUtils.PathEndReached(currentLane))
                 {
-                    VehicleUtils.DeleteVehicle(m_CommandBuffer, jobIndex, entity, layout);
-                    return;
-                }
-                if (VehicleUtils.ParkingSpaceReached(currentLane, pathOwner) || (personalCar.m_State & (PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) != 0)
-                {
-                    if ((personalCar.m_State & PersonalCarFlags.Disembarking) != 0)
-                    {
-                        if (StopDisembarking(entity, layout, ref personalCar, ref pathOwner))
-                        {
-                            ParkCar(jobIndex, entity, layout, resetLocation: false, ref personalCar, ref currentLane);
-                        }
-                        return;
-                    }
                     if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
                     {
-                        if (!StartDisembarking(jobIndex, entity, layout, ref personalCar, ref currentLane))
+                        if (!StartDisembarking(jobIndex, entity, layout, ref personalCar, ref currentLane, ref pathOwner))
                         {
-                            ParkCar(jobIndex, entity, layout, resetLocation: false, ref personalCar, ref currentLane);
+                            ParkCar(jobIndex, entity, layout, isBicycle, resetLocation: false, ref personalCar, ref currentLane);
                         }
-                        return;
                     }
-                    if ((personalCar.m_State & PersonalCarFlags.Boarding) == 0)
+                    else
                     {
-                        if (!StartBoarding(entity, ref personalCar, ref car, ref target))
-                        {
-                            VehicleUtils.DeleteVehicle(m_CommandBuffer, jobIndex, entity, layout);
-                        }
-                        return;
+                        VehicleUtils.DeleteVehicle(m_CommandBuffer, jobIndex, entity, layout);
                     }
-                    if (!StopBoarding(entity, layout, navigationLanes, ref personalCar, ref currentLane, ref pathOwner, ref target))
-                    {
-                        return;
-                    }
-                    if ((personalCar.m_State & PersonalCarFlags.Transporting) == 0)
-                    {
-                        ParkCar(jobIndex, entity, layout, resetLocation: false, ref personalCar, ref currentLane);
-                        return;
-                    }
+                    return;
                 }
-                else if (VehicleUtils.WaypointReached(currentLane))
+                if (VehicleUtils.WaypointReached(currentLane))
                 {
                     currentLane.m_LaneFlags &= ~Game.Vehicles.CarLaneFlags.Waypoint;
                     pathOwner.m_State &= ~PathFlags.Failed;
@@ -346,7 +363,7 @@ namespace RealisticParking
             {
                 if (VehicleUtils.RequireNewPath(pathOwner))
                 {
-                    FindNewPath(entity, prefabRef, layout, ref personalCar, ref currentLane, ref pathOwner, ref target);
+                    FindNewPath(entity, prefabRef, layout, isBicycle, ref personalCar, ref currentLane, ref pathOwner, ref target);
                 }
                 else if ((pathOwner.m_State & (PathFlags.Pending | PathFlags.Failed | PathFlags.Stuck)) == 0)
                 {
@@ -413,9 +430,9 @@ namespace RealisticParking
             pathOwner.m_State |= PathFlags.Obsolete;
         }
 
-        private void ResetPath(Entity entity, int jobIndex, ref Random random, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner)
+        private void ResetPath(Entity entity, int jobIndex, bool isBicycle, ref Random random, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner)
         {
-            if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0)
+            if ((personalCar.m_State & PersonalCarFlags.Transporting) != 0 && !isBicycle)
             {
                 car.m_Flags |= CarFlags.StayOnRoad;
             }
@@ -425,7 +442,7 @@ namespace RealisticParking
             }
             DynamicBuffer<PathElement> path = m_PathElements[entity];
             PathUtils.ResetPath(ref currentLane, path, m_SlaveLaneData, m_OwnerData, m_SubLanes);
-            VehicleUtils.ResetParkingLaneStatus(entity, ref currentLane, ref pathOwner, path, ref m_EntityLookup, ref m_CurveData, ref m_ParkingLaneData, ref m_CarLaneData, ref m_ConnectionLaneData, ref m_SpawnLocationData, ref m_PrefabRefData, ref m_PrefabSpawnLocationData);
+            VehicleUtils.ResetParkingLaneStatus(entity, isBicycle, ref currentLane, ref pathOwner, path, ref m_EntityLookup, ref m_CurveData, ref m_ParkingLaneData, ref m_CarLaneData, ref m_PedestrianLaneData, ref m_ConnectionLaneData, ref m_SpawnLocationData, ref m_PrefabRefData, ref m_PrefabSpawnLocationData);
             int i = VehicleUtils.SetParkingCurvePos(entity, ref random, currentLane, pathOwner, path, ref m_ParkedCarData, ref m_UnspawnedData, ref m_CurveData, ref m_ParkingLaneData, ref m_ConnectionLaneData, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, ref m_PrefabParkingLaneData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false);
             if (i != path.Length)
             {
@@ -596,18 +613,13 @@ namespace RealisticParking
             personalCar.m_State |= PersonalCarFlags.Transporting;
             bool flag = false;
             target.m_Target = target2.m_Target;
-            if (m_HouseholdMemberData.HasComponent(leader))
+            if (m_ResidentData.TryGetComponent(leader, out var componentData) && m_HouseholdMemberData.TryGetComponent(componentData.m_Citizen, out var componentData2) && m_PropertyRenterData.TryGetComponent(componentData2.m_Household, out var componentData3))
             {
-                Entity household = m_HouseholdMemberData[leader].m_Household;
-                if (m_PropertyRenterData.HasComponent(household))
-                {
-                    Entity property = m_PropertyRenterData[household].m_Property;
-                    flag |= property == target.m_Target;
-                }
+                flag |= componentData3.m_Property == target.m_Target;
             }
-            if (m_DivertData.HasComponent(leader))
+            if (m_DivertData.TryGetComponent(leader, out var componentData4))
             {
-                flag &= m_DivertData[leader].m_Purpose == Purpose.None;
+                flag &= componentData4.m_Purpose == Purpose.None;
             }
             if (flag)
             {
@@ -621,7 +633,7 @@ namespace RealisticParking
             return true;
         }
 
-        private bool StartDisembarking(int jobIndex, Entity vehicleEntity, DynamicBuffer<LayoutElement> layout, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane)
+        private bool StartDisembarking(int jobIndex, Entity vehicleEntity, DynamicBuffer<LayoutElement> layout, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane, ref PathOwner pathOwner)
         {
             if (!HasPassengers(vehicleEntity, layout))
             {
@@ -629,32 +641,55 @@ namespace RealisticParking
             }
             personalCar.m_State &= ~PersonalCarFlags.Transporting;
             personalCar.m_State |= PersonalCarFlags.Disembarking;
+            int num = 0;
             if (m_ParkingLaneData.HasComponent(currentLane.m_Lane))
             {
                 Game.Net.ParkingLane parkingLane = m_ParkingLaneData[currentLane.m_Lane];
                 if (parkingLane.m_ParkingFee > 0)
                 {
-                    Entity entity = FindLeader(vehicleEntity, layout);
-                    if (m_ResidentData.HasComponent(entity))
+                    num = parkingLane.m_ParkingFee;
+                }
+            }
+            else if (VehicleUtils.PathEndReached(currentLane) && !VehicleUtils.PathfindFailed(pathOwner) && m_SpawnLocationData.HasComponent(currentLane.m_Lane))
+            {
+                DynamicBuffer<PathElement> dynamicBuffer = m_PathElements[vehicleEntity];
+                if (dynamicBuffer.Length <= pathOwner.m_ElementIndex)
+                {
+                    pathOwner.m_ElementIndex = 0;
+                    dynamicBuffer.Clear();
+                    dynamicBuffer.Add(new PathElement(currentLane.m_Lane, currentLane.m_CurvePosition.zz));
+                }
+            }
+            if (num == 0 && m_GarageLaneData.HasComponent(currentLane.m_Lane))
+            {
+                GarageLane garageLane = m_GarageLaneData[currentLane.m_Lane];
+                if (garageLane.m_ParkingFee > 0)
+                {
+                    num = garageLane.m_ParkingFee;
+                }
+            }
+            if (num > 0)
+            {
+                Entity entity = FindLeader(vehicleEntity, layout);
+                if (m_ResidentData.HasComponent(entity))
+                {
+                    Game.Creatures.Resident resident = m_ResidentData[entity];
+                    if (m_HouseholdMemberData.HasComponent(resident.m_Citizen))
                     {
-                        Game.Creatures.Resident resident = m_ResidentData[entity];
-                        if (m_HouseholdMemberData.HasComponent(resident.m_Citizen))
+                        HouseholdMember householdMember = m_HouseholdMemberData[resident.m_Citizen];
+                        m_MoneyTransferQueue.Enqueue(new NewPersonalCarAISystem.MoneyTransfer
                         {
-                            HouseholdMember householdMember = m_HouseholdMemberData[resident.m_Citizen];
-                            m_MoneyTransferQueue.Enqueue(new NewPersonalCarAISystem.MoneyTransfer
-                            {
-                                m_Payer = householdMember.m_Household,
-                                m_Recipient = m_City,
-                                m_Amount = parkingLane.m_ParkingFee
-                            });
-                            m_FeeQueue.Enqueue(new ServiceFeeSystem.FeeEvent
-                            {
-                                m_Amount = 1f,
-                                m_Cost = (int)parkingLane.m_ParkingFee,
-                                m_Resource = PlayerResource.Parking,
-                                m_Outside = false
-                            });
-                        }
+                            m_Payer = householdMember.m_Household,
+                            m_Recipient = m_City,
+                            m_Amount = num
+                        });
+                        m_FeeQueue.Enqueue(new ServiceFeeSystem.FeeEvent
+                        {
+                            m_Amount = 1f,
+                            m_Cost = num,
+                            m_Resource = PlayerResource.Parking,
+                            m_Outside = false
+                        });
                     }
                 }
             }
@@ -673,8 +708,13 @@ namespace RealisticParking
             return true;
         }
 
-        private void ParkCar(int jobIndex, Entity entity, DynamicBuffer<LayoutElement> layout, bool resetLocation, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane)
+        private void ParkCar(int jobIndex, Entity entity, DynamicBuffer<LayoutElement> layout, bool isBicycle, bool resetLocation, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane)
         {
+            if ((isBicycle && (resetLocation || ((!m_ParkingLaneData.HasComponent(currentLane.m_Lane) || !(currentLane.m_ChangeLane == Entity.Null)) && !m_GarageLaneData.HasComponent(currentLane.m_Lane)))) || (personalCar.m_State & PersonalCarFlags.DummyTraffic) != 0)
+            {
+                VehicleUtils.DeleteVehicle(m_CommandBuffer, jobIndex, entity, layout);
+                return;
+            }
             personalCar.m_State &= ~(PersonalCarFlags.Transporting | PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking);
             if (layout.IsCreated)
             {
@@ -715,7 +755,7 @@ namespace RealisticParking
             }
         }
 
-        private void FindNewPath(Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
+        private void FindNewPath(Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, bool isBicycle, ref Game.Vehicles.PersonalCar personalCar, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
         {
             CarData carData = m_PrefabCarData[prefabRef.m_Prefab];
             pathOwner.m_State &= ~(PathFlags.AddDestination | PathFlags.Divert);
@@ -729,17 +769,13 @@ namespace RealisticParking
                 pathfindParameters.m_MaxSpeed = new float2(carData.m_MaxSpeed, 277.77777f);
                 pathfindParameters.m_WalkSpeed = 5.555556f;
                 pathfindParameters.m_Weights = new PathfindWeights(1f, 1f, 1f, 1f);
-                pathfindParameters.m_Methods = VehicleUtils.GetPathMethods(carData) | PathMethod.Parking | PathMethod.Pedestrian;
                 pathfindParameters.m_ParkingTarget = VehicleUtils.GetParkingSource(entity, currentLane, ref m_ParkingLaneData, ref m_ConnectionLaneData);
                 pathfindParameters.m_ParkingDelta = currentLane.m_CurvePosition.z;
                 pathfindParameters.m_ParkingSize = VehicleUtils.GetParkingSize(entity, ref m_PrefabRefData, ref m_PrefabObjectGeometryData);
-                pathfindParameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
-                pathfindParameters.m_SecondaryIgnoredRules = VehicleUtils.GetIgnoredPathfindRulesTaxiDefaults();
+                pathfindParameters.m_TaxiIgnoredRules = VehicleUtils.GetIgnoredPathfindRulesTaxiDefaults();
                 parameters = pathfindParameters;
                 SetupQueueTarget setupQueueTarget = default(SetupQueueTarget);
                 setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
-                setupQueueTarget.m_Methods = VehicleUtils.GetPathMethods(carData) | PathMethod.Parking;
-                setupQueueTarget.m_RoadTypes = RoadTypes.Car;
                 origin = setupQueueTarget;
                 setupQueueTarget = default(SetupQueueTarget);
                 setupQueueTarget.m_Type = SetupTargetType.CurrentLocation;
@@ -747,6 +783,20 @@ namespace RealisticParking
                 setupQueueTarget.m_Entity = target.m_Target;
                 setupQueueTarget.m_RandomCost = 30f;
                 destination = setupQueueTarget;
+                if (isBicycle)
+                {
+                    parameters.m_Methods = PathMethod.Pedestrian | PathMethod.Bicycle | PathMethod.BicycleParking;
+                    parameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRulesBicycleDefaults();
+                    origin.m_Methods = PathMethod.Bicycle | PathMethod.BicycleParking;
+                    origin.m_RoadTypes = RoadTypes.Bicycle;
+                }
+                else
+                {
+                    parameters.m_Methods = VehicleUtils.GetPathMethods(carData) | PathMethod.Parking | PathMethod.Pedestrian;
+                    parameters.m_IgnoredRules = VehicleUtils.GetIgnoredPathfindRules(carData);
+                    origin.m_Methods = VehicleUtils.GetPathMethods(carData) | PathMethod.Parking;
+                    origin.m_RoadTypes = RoadTypes.Car;
+                }
                 Entity entity2 = FindLeader(entity, layout);
                 if (m_ResidentData.HasComponent(entity2))
                 {
@@ -758,13 +808,10 @@ namespace RealisticParking
                     parameters.m_WalkSpeed = humanData.m_WalkSpeed;
                     parameters.m_Methods |= RouteUtils.GetTaxiMethods(resident) | RouteUtils.GetPublicTransportMethods(resident, m_TimeOfDay);
                     destination.m_ActivityMask = creatureData.m_SupportedActivities;
-                    if (m_HouseholdMemberData.HasComponent(resident.m_Citizen))
+                    if (m_HouseholdMemberData.TryGetComponent(resident.m_Citizen, out var componentData) && m_PropertyRenterData.TryGetComponent(componentData.m_Household, out var componentData2))
                     {
-                        Entity household = m_HouseholdMemberData[resident.m_Citizen].m_Household;
-                        if (m_PropertyRenterData.HasComponent(household))
-                        {
-                            flag |= (parameters.m_Authorization1 = m_PropertyRenterData[household].m_Property) == target.m_Target;
-                        }
+                        parameters.m_Authorization1 = componentData2.m_Property;
+                        flag |= componentData2.m_Property == target.m_Target;
                     }
                     if (m_WorkerData.HasComponent(resident.m_Citizen))
                     {
@@ -781,13 +828,13 @@ namespace RealisticParking
                     if (m_CitizenData.HasComponent(resident.m_Citizen))
                     {
                         Citizen citizen = m_CitizenData[resident.m_Citizen];
-                        Entity household2 = m_HouseholdMemberData[resident.m_Citizen].m_Household;
-                        Household household3 = m_HouseholdData[household2];
-                        parameters.m_Weights = CitizenUtils.GetPathfindWeights(citizen, household3, m_HouseholdCitizens[household2].Length);
+                        Entity household = m_HouseholdMemberData[resident.m_Citizen].m_Household;
+                        Household household2 = m_HouseholdData[household];
+                        parameters.m_Weights = CitizenUtils.GetPathfindWeights(citizen, household2, m_HouseholdCitizens[household].Length);
                     }
-                    if (m_TravelPurposeData.TryGetComponent(resident.m_Citizen, out var componentData))
+                    if (m_TravelPurposeData.TryGetComponent(resident.m_Citizen, out var componentData3))
                     {
-                        switch (componentData.m_Purpose)
+                        switch (componentData3.m_Purpose)
                         {
                             case Purpose.EmergencyShelter:
                                 parameters.m_Weights = new PathfindWeights(1f, 0.2f, 0f, 0.1f);
@@ -797,11 +844,15 @@ namespace RealisticParking
                                 break;
                         }
                     }
-                    if (m_DivertData.HasComponent(entity2))
+                    if (m_DivertData.TryGetComponent(entity2, out var componentData4))
                     {
-                        Divert divert = m_DivertData[entity2];
-                        CreatureUtils.DivertDestination(ref destination, ref pathOwner, divert);
-                        flag &= divert.m_Purpose == Purpose.None;
+                        CreatureUtils.DivertDestination(ref destination, ref pathOwner, componentData4);
+                        flag &= componentData4.m_Purpose == Purpose.None;
+                    }
+                    if (isBicycle && flag)
+                    {
+                        destination.m_Methods |= PathMethod.Bicycle;
+                        destination.m_RoadTypes |= RoadTypes.Bicycle;
                     }
                 }
             }

@@ -10,19 +10,19 @@
 # Realistic Parking Mod
 
 Are you tired of your city roads getting gridlocked by traffic looking for (nonexistent) parking?
-Tired of cars making erratic u-turns in the middle of your main roads because of a parking reroute?
+Tired of cars and bikes making erratic u-turns in the middle of your main roads?
 Tired of parking garages for high-rise buildings barely having any parking spots?
 
 This mod aims to make the parking behavior more realistic and improve traffic efficiency.
 
 ## Features
-* **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars start driving towards a spot, it will become closed off to future pathfinding. This makes for a more realistic amount of cars in the city relative to the amount of available parking and keeps cims from parking far from their destination.
-* **Reduced Parking Reroute Distance**: In vanilla, cars can detect their parking spot getting taken up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that range so that cars will only see if their spot is taken once they are near their target parking spot.
-* **Parking Minimums for Garages**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property.
+* **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars and bikes start going towards a spot, it will become closed off to future pathfinding. This makes for a more realistic amount of cars and bikes in the city relative to the amount of available parking and keeps cims from parking far from their destination.
+* **Reduced Parking Reroute Distance**: In vanilla, cars and bikes can detect their parking spot getting taken up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that range so that they will only see if their spot is taken once they are near their target parking spot.
+* **Increased Parking Garage Capacities**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property.
 * All features can be disabled if wanted
 
 ## Adding to an existing save
-* This mod can be safely added to an existing save, but it may cause some weird behavior at first. Since the demand system does not affect existing pathfinding requests from before the mod, if you have limited parking in your city, you may see cars flocking to one parking spot before rerouting away. To alleviate this behavior, I recommended that you keep your reroute distance high at first and wait for the these cars to reroute.
+* This mod can be safely added to an existing save, but it may cause some weird behavior at first. Since the demand system does not affect existing pathfinding requests from before the mod, if you have limited parking in your city, you may see cars and bikes flocking to one parking spot before rerouting away. To alleviate this behavior, I recommended that you keep your reroute distance high at first and wait for the them to reroute.
 
 ## Removing from a save
 * This mod can be safely removed from a save, as while some features overwrite vanilla values, they should be reset to their vanilla values on load by the game.
@@ -48,16 +48,14 @@ This mod aims to make the parking behavior more realistic and improve traffic ef
 	<!--Link to the forum post where the mod can be discussed-->
 	<ForumLink Value="https://forum.paradoxplaza.com/forum/threads/realistic-parking.1698920/" />
 	<!--Version of the mod-->
-	<ModVersion Value="1.1.2" />
+	<ModVersion Value="1.2.1" />
 	<!--Recommended version of the base game to use the mod-->
-	<GameVersion Value="1.3.*" />
+	<GameVersion Value="1.4.*" />
 	<!--Dependency for the mod, can be set multiple times-->
 	<Dependency Id="" />
 	<!--Change log for new version. Single line or multi line. Supports minimal markdown subset-->
   <ChangeLog>
-* Saved settings file now uses standard ../ModsSettings/ path for new installs
-* Existing installs will keep using the old path - so no settings will be lost on update
-* Thanks to Honu and StarQ for help!
+* No gameplay changes - added bikes to settings descriptions
   </ChangeLog>
 	<!--External link. supported types are discord, github, youtube, twitch, x, paypal, patreon, buymeacoffee, kofi, crowdin, gitlab-->
   <ExternalLink Type="discord" Url="https://discord.gg/HTav7ARPs2"/>
