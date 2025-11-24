@@ -2,7 +2,7 @@
 	<!--Id must be set in order to update existed mod. it is not required for publishing mod for the first time-->
 	<ModId Value="87313" />
 	<!--Name of the mod to display to players-->
-	<DisplayName Value="Realistic Parking Mod" />
+	<DisplayName Value="Realistic Parking (U-Turns Fix)" />
 	<!--Short description of the mod-->
 	<ShortDescription Value="Alters parking behavior to enhance traffic efficiency and realism" />
 	<!--Long description of the mod. Single line or multi line. Supports minimal markdown subset-->
@@ -17,7 +17,7 @@ This mod aims to make the parking behavior more realistic and improve traffic ef
 
 ## Features
 * **Induced Demand for Parking**: With this mod, parking spots will only accept a limited amount of pathfinding requests, so once enough cars and bikes start going towards a spot, it will become closed off to future pathfinding. This makes for a more realistic amount of cars and bikes in the city relative to the amount of available parking and keeps cims from parking far from their destination.
-* **Reduced Parking Reroute Distance**: In vanilla, cars and bikes can detect their parking spot getting taken up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that range so that they will only see if their spot is taken once they are near their target parking spot.
+* **Reduced Parking Reroute Distance**: In vanilla, cars and bikes can detect their parking destination  getting taken up to 4000 nodes away, causing them to make erratic and dangerous u-turns when they reroute to a new spot. This mod allows you to reduce that range so that they will only see if their spot is taken once they are near their target parking spot.
 * **Increased Parking Garage Capacities**: In vanilla, apartments only have 2-3 parking spots in their garages, even if there are hundreds of residents, and high-rise offices also usually only have 30 spots, regardless of the number of employees. This mod alters the parking garage capacity to be dependent on the household and worker count of the property.
 * All features can be disabled if wanted
 

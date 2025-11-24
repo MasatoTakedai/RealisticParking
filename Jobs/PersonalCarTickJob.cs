@@ -51,7 +51,7 @@ namespace RealisticParking
             if (enableRerouteLimit)
                 return rerouteLimit;
             else
-                return 4000;
+                return 40000;
         }
 
         private int GetActualGarageCount(Entity entity, GarageLane garageLane)

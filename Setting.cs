@@ -129,7 +129,7 @@ namespace RealisticParking
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.EnableRerouteDistance)), "Enable Reroute Distance Change" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.EnableRerouteDistance)), 
                     "Enable reroute distance change for car and bike navigation. In the vanilla system, a car or bike can sense that the parking spot they are navigating to is full " +
-                    "up to 4000 nodes away. This causes random u-turns on main roads, as they will suddenly change parking destinations while driving. This system aims to get rid of that " +
+                    "up to 40000 nodes away. This causes random u-turns on main roads, as they will suddenly change parking destinations while driving. This system aims to get rid of that " +
                     "by only letting the car or bike sense that the parking is unavailable from a closer distance." 
                 },
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.RerouteDistance)), "Reroute Node Distance" },
