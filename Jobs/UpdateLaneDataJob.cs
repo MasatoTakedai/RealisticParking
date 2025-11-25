@@ -43,8 +43,7 @@ namespace RealisticParking
 
         private float CalculateCustomFreeSpace(Entity entity, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
-            float vanillaFreeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-            float customFreeSpace = vanillaFreeSpace;
+            float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
             if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
             {
                 // calculate number of spots free with diff alg for roadside parking and parking lots
@@ -52,21 +51,14 @@ namespace RealisticParking
                 if (parkingLaneData.m_SlotInterval != 0)
                     spotsFree = (int)math.floor((curve.m_Length + 0.01f) / parkingLaneData.m_SlotInterval) - laneObjects.Length;
                 else
-                    spotsFree = (int)math.ceil(vanillaFreeSpace / 6);
+                    spotsFree = (int)math.ceil(freeSpace / 6);
 
                 // if there are no more spots for cars to queue to that spot, remove free space
                 int supplyLeft = demandTolerance + (int)(spotsFree * demandSizePerSpot) - demandData.demand;
                 if (supplyLeft <= 0)
-                    customFreeSpace = 0.01f;
-
-                // remove parking demand component if no viable spots left
-                if (vanillaFreeSpace < 2)
-                {
-                    customFreeSpace = vanillaFreeSpace;
-                    commandBuffer.RemoveComponent<ParkingDemand>(entity);
-                }
+                    freeSpace = 0.01f;
             }
-            return customFreeSpace;
+            return freeSpace;
         }
 
         // apply custom garage capacity based on household and worker count if enabled
@@ -794,29 +786,29 @@ namespace RealisticParking
         }
 
         private struct CountVehiclesIterator : INativeQuadTreeIterator<Entity, QuadTreeBoundsXZ>, IUnsafeQuadTreeIterator<Entity, QuadTreeBoundsXZ>
-        {
-            public Entity m_Lane;
+		{
+			public Entity m_Lane;
 
-            public Bounds3 m_Bounds;
+			public Bounds3 m_Bounds;
 
-            public int m_Result;
+			public int m_Result;
 
-            public ComponentLookup<ParkedCar> m_ParkedCarData;
+			public ComponentLookup<ParkedCar> m_ParkedCarData;
 
-            public ComponentLookup<Controller> m_ControllerData;
+			public ComponentLookup<Controller> m_ControllerData;
 
-            public bool Intersect(QuadTreeBoundsXZ bounds)
-            {
-                return MathUtils.Intersect(bounds.m_Bounds, m_Bounds);
-            }
+			public bool Intersect(QuadTreeBoundsXZ bounds)
+			{
+				return MathUtils.Intersect(bounds.m_Bounds, m_Bounds);
+			}
 
-            public void Iterate(QuadTreeBoundsXZ bounds, Entity entity)
-            {
-                if (MathUtils.Intersect(bounds.m_Bounds, m_Bounds) && (!m_ControllerData.TryGetComponent(entity, out var componentData) || !(componentData.m_Controller != entity)) && m_ParkedCarData.TryGetComponent(entity, out var componentData2) && componentData2.m_Lane == m_Lane)
-                {
-                    m_Result++;
-                }
-            }
-        }
+			public void Iterate(QuadTreeBoundsXZ bounds, Entity entity)
+			{
+				if (MathUtils.Intersect(bounds.m_Bounds, m_Bounds) && (!m_ControllerData.TryGetComponent(entity, out var componentData) || !(componentData.m_Controller != entity)) && m_ParkedCarData.TryGetComponent(entity, out var componentData2) && componentData2.m_Lane == m_Lane)
+				{
+					m_Result++;
+				}
+			}
+		}
     }
 }
