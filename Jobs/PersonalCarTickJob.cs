@@ -27,7 +27,6 @@ namespace RealisticParking
     public struct PersonalCarTickJob : IJobChunk
     {
         // custom code start
-        [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;   
         [ReadOnly] public bool enableDemandSystem;
         [ReadOnly] public bool enableRerouteLimit;
         [ReadOnly] public int rerouteLimit;
@@ -52,14 +51,6 @@ namespace RealisticParking
                 return rerouteLimit;
             else
                 return 40000;
-        }
-
-        private int GetActualGarageCount(Entity entity, GarageLane garageLane)
-        {
-            if (garageCountLookup.TryGetComponent(entity, out GarageCount customCount))
-                return customCount.actualCount;
-            else
-                return garageLane.m_VehicleCount;
         }
         // custom code end
 
@@ -415,7 +406,7 @@ namespace RealisticParking
                 }
                 GarageLane garageLane = m_GarageLaneData[pathElement.m_Target];
                 Game.Net.ConnectionLane connectionLane = m_ConnectionLaneData[pathElement.m_Target];
-                if (GetActualGarageCount(pathElement.m_Target, garageLane) < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
+                if (garageLane.m_VehicleCount < garageLane.m_VehicleCapacity && (connectionLane.m_Flags & ConnectionLaneFlags.Disabled) == 0)
                 {
                     return;
                 }

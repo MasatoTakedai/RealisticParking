@@ -28,8 +28,8 @@ namespace RealisticParking
     public struct UpdateLaneDataJob : IJobChunk
     {
         // custom code start
-        public EntityCommandBuffer commandBuffer;
-        [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
+        private const int CAR_LENGTH = 6;
+        public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemandLookup;
         [ReadOnly] public ComponentLookup<GarageCount> garageCountLookup;
         [ReadOnly] public BufferLookup<Renter> renterLookup;
@@ -44,17 +44,17 @@ namespace RealisticParking
         private float CalculateCustomFreeSpace(Entity entity, Curve curve, Game.Net.ParkingLane parkingLane, ParkingLaneData parkingLaneData, DynamicBuffer<LaneObject> laneObjects, DynamicBuffer<LaneOverlap> laneOverlaps, Bounds1 blockedRange)
         {
             float freeSpace = CalculateFreeSpace(curve, parkingLane, parkingLaneData, laneObjects, laneOverlaps, blockedRange);
-            if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
+            if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand parkingDemand))
             {
-                // calculate number of spots free with diff alg for roadside parking and parking lots
+                // calculate number of spots free with diff alg for parking lots and roadside parking
                 int spotsFree = 0;
                 if (parkingLaneData.m_SlotInterval != 0)
-                    spotsFree = (int)math.floor((curve.m_Length + 0.01f) / parkingLaneData.m_SlotInterval) - laneObjects.Length;
+                    spotsFree = NetUtils.GetParkingSlotCount(curve, parkingLane, parkingLaneData);
                 else
-                    spotsFree = (int)math.ceil(freeSpace / 6);
+                    spotsFree = (int)math.ceil(freeSpace / CAR_LENGTH);
 
                 // if there are no more spots for cars to queue to that spot, remove free space
-                int supplyLeft = demandTolerance + (int)(spotsFree * demandSizePerSpot) - demandData.demand;
+                int supplyLeft = demandTolerance + (int)(spotsFree * demandSizePerSpot) - parkingDemand.demand;
                 if (supplyLeft <= 0)
                     freeSpace = 0.01f;
             }
@@ -87,25 +87,24 @@ namespace RealisticParking
             return capacity;
         }
 
-        // set garage count based on demand and add GarageCount component holding the actual count value
-        private ushort CustomCountGarageVehicles(Entity entity, GarageLane garageLane, Owner owner, Curve curve, Game.Net.ConnectionLane connectionLane)
+        // set GarageCount component based on demand
+        private void SetGarageCountComponent(Entity entity, int jobIndex, ushort vanillaCount)
         {
-            ushort vanillaCount = CountVehicles(entity, owner, curve, connectionLane);
             ushort customCount = vanillaCount;
             if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
             {
                 customCount += (ushort)math.max(0, (demandData.demand - demandTolerance) / demandSizePerSpot);
-
-                if (customCount > vanillaCount)
-                {
-                    if (!garageCountLookup.HasComponent(entity))
-                        commandBuffer.AddComponent<GarageCount>(entity, new GarageCount(vanillaCount));
-                    else
-                        commandBuffer.SetComponent(entity, new GarageCount(vanillaCount));
-                }
             }
 
-            return (ushort)math.max(math.min((uint)customCount, garageLane.m_VehicleCapacity), vanillaCount);
+            if (customCount > vanillaCount)
+            {
+                if (!garageCountLookup.HasComponent(entity))
+                    commandBuffer.AddComponent<GarageCount>(jobIndex, entity, new GarageCount(customCount));
+                else
+                    commandBuffer.SetComponent(jobIndex, entity, new GarageCount(customCount));
+            }
+            else if (garageCountLookup.HasComponent(entity))
+                commandBuffer.RemoveComponent<GarageCount>(jobIndex, entity);
         }
         // custom code end
 
@@ -315,7 +314,8 @@ namespace RealisticParking
                     connectionLane.m_Flags &= ~(ConnectionLaneFlags.Disabled | ConnectionLaneFlags.AllowEnter | ConnectionLaneFlags.AllowExit);
                     bool noRestriction = (connectionLane.m_Flags & ConnectionLaneFlags.NoRestriction) != 0;
                     GetParkingStats(owner2, default(Game.Net.ParkingLane), noRestriction, out connectionLane.m_AccessRestriction, out value2.m_VehicleCapacity, out value2.m_ParkingFee, out value2.m_ComfortFactor, out var disabled2, out var allowEnter2, out var allowExit2);
-                    value2.m_VehicleCount = CustomCountGarageVehicles(entity, value2, owner2, curve2, connectionLane);
+                    value2.m_VehicleCount = CountVehicles(entity, owner2, curve2, connectionLane);
+                    SetGarageCountComponent(entity, unfilteredChunkIndex, value2.m_VehicleCount);
                     if (disabled2)
                     {
                         connectionLane.m_Flags |= ConnectionLaneFlags.Disabled;

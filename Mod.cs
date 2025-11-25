@@ -2,9 +2,8 @@
 using Colossal.Logging;
 using Game;
 using Game.Modding;
-using Game.Pathfind;
 using Game.SceneFlow;
-using Game.Simulation;
+using HarmonyLib;
 
 namespace RealisticParking
 {
@@ -34,6 +33,10 @@ namespace RealisticParking
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAt<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
             updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification1);
+            updateSystem.UpdateAt<GarageLanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
+
+            var harmony = new Harmony("daancingbanana.realisticparking");
+            harmony.PatchAll();
         }
 
         public void OnDispose()

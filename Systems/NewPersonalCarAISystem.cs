@@ -208,7 +208,6 @@ namespace RealisticParking
                 m_PathfindQueue = m_PathfindSetupSystem.GetQueue(this, 64).AsParallelWriter(),
                 m_MoneyTransferQueue = m_Actions.m_MoneyTransferQueue.AsParallelWriter(),
                 m_FeeQueue = m_ServiceFeeSystem.GetFeeQueue(out deps).AsParallelWriter(),
-                garageCountLookup = SystemAPI.GetComponentLookup<GarageCount>(isReadOnly: true),
                 enableRerouteLimit = this.enableRerouteLimit,
                 rerouteLimit = this.rerouteLimit,
                 enableDemandSystem = this.enableDemandSystem
