@@ -128,10 +128,10 @@ namespace RealisticParking
         public ComponentLookup<PropertyRenter> m_PropertyRenterData;
 
         [ReadOnly]
-        public ComponentLookup<Game.Net.PedestrianLane> m_PedestrianLaneData;
+        public ComponentLookup<Game.Net.CarLane> m_CarLaneData;
 
         [ReadOnly]
-        public ComponentLookup<Game.Net.CarLane> m_CarLaneData;
+        public ComponentLookup<Game.Net.PedestrianLane> m_PedestrianLaneData;
 
         [ReadOnly]
         public ComponentLookup<Game.Net.ParkingLane> m_ParkingLaneData;
@@ -422,7 +422,7 @@ namespace RealisticParking
             }
             for (int i = 0; i < num2; i++)
             {
-                if (IsParkingLane(path[pathOwner.m_ElementIndex + i].m_Target))
+                if (VehicleUtils.IsParkingLane(path[pathOwner.m_ElementIndex + i].m_Target, ref m_ParkingLaneData, ref m_ConnectionLaneData))
                 {
                     return;
                 }
@@ -454,44 +454,6 @@ namespace RealisticParking
         {
             m_PathElements[entity].Clear();
             pathOwner.m_ElementIndex = 0;
-        }
-
-        private bool IsParkingLane(Entity lane)
-        {
-            if (m_ParkingLaneData.HasComponent(lane))
-            {
-                return true;
-            }
-            if (m_ConnectionLaneData.TryGetComponent(lane, out var componentData))
-            {
-                return (componentData.m_Flags & ConnectionLaneFlags.Parking) != 0;
-            }
-            return false;
-        }
-
-        private bool IsCarLane(Entity lane)
-        {
-            if (m_CarLaneData.HasComponent(lane))
-            {
-                return true;
-            }
-            if (m_ConnectionLaneData.TryGetComponent(lane, out var componentData))
-            {
-                return (componentData.m_Flags & ConnectionLaneFlags.Road) != 0;
-            }
-            if (m_SpawnLocationData.HasComponent(lane))
-            {
-                PrefabRef prefabRef = m_PrefabRefData[lane];
-                if (m_PrefabSpawnLocationData.TryGetComponent(prefabRef.m_Prefab, out var componentData2))
-                {
-                    if (componentData2.m_ConnectionType != RouteConnectionType.Road)
-                    {
-                        return componentData2.m_ConnectionType == RouteConnectionType.Parking;
-                    }
-                    return true;
-                }
-            }
-            return false;
         }
 
         private bool StartBoarding(Entity vehicleEntity, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref Target target)

@@ -28,11 +28,11 @@ namespace RealisticParking
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(settings));
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
-            updateSystem.UpdateBefore<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateBefore<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
+            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
-            updateSystem.UpdateBefore<NewParkingLaneDataSystem, ParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
+            updateSystem.UpdateAt<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
             updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification1);
         }
 
