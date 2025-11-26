@@ -2,7 +2,9 @@
 using Colossal.Logging;
 using Game;
 using Game.Modding;
+using Game.Pathfind;
 using Game.SceneFlow;
+using Game.Simulation;
 using HarmonyLib;
 
 namespace RealisticParking
@@ -27,12 +29,12 @@ namespace RealisticParking
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(settings));
 
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
-            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
-            updateSystem.UpdateAt<NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
+            updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
-            updateSystem.UpdateAt<NewParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
-            updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification1);
+            updateSystem.UpdateAfter<NewParkingLaneDataSystem, ParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
+            updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAt<GarageLanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
 
             var harmony = new Harmony("daancingbanana.realisticparking");
