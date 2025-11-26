@@ -90,21 +90,21 @@ namespace RealisticParking
         // set GarageCount component based on demand
         private void SetGarageCountComponent(Entity entity, int jobIndex, ushort vanillaCount)
         {
-            ushort customCount = vanillaCount;
-            if (enableDemandSystem && parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
+            if (!enableDemandSystem)
             {
-                customCount += (ushort)math.max(0, (demandData.demand - demandTolerance) / demandSizePerSpot);
+                if (garageCountLookup.HasComponent(entity))
+                    commandBuffer.RemoveComponent<GarageCount>(jobIndex, entity);
+                return;
             }
 
-            if (customCount > vanillaCount)
-            {
-                if (!garageCountLookup.HasComponent(entity))
-                    commandBuffer.AddComponent<GarageCount>(jobIndex, entity, new GarageCount(customCount));
-                else
-                    commandBuffer.SetComponent(jobIndex, entity, new GarageCount(customCount));
-            }
-            else if (garageCountLookup.HasComponent(entity))
-                commandBuffer.RemoveComponent<GarageCount>(jobIndex, entity);
+            ushort customCount = vanillaCount;
+            if (parkingDemandLookup.TryGetComponent(entity, out ParkingDemand demandData))
+                customCount += (ushort)math.max(0, (demandData.demand - demandTolerance) / demandSizePerSpot);
+
+            if (!garageCountLookup.HasComponent(entity))
+                commandBuffer.AddComponent<GarageCount>(jobIndex, entity, new GarageCount(customCount));
+            else if (garageCountLookup.TryGetComponent(entity, out var oldGarageCount) && customCount != oldGarageCount.countWithDemand)
+                commandBuffer.SetComponent(jobIndex, entity, new GarageCount(customCount));
         }
         // custom code end
 

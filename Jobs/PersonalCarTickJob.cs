@@ -31,17 +31,17 @@ namespace RealisticParking
         [ReadOnly] public bool enableRerouteLimit;
         [ReadOnly] public int rerouteLimit;
 
-        // add custom ParkingTarget and CarQueued components with a new destination
-        private void SetCustomParkingComponents(Entity entity, int jobIndex, PathElement pathElement)
+        // add custom CarQueued component with on parking destination entity
+        private void AddCarQueuedComponent(Entity entity, int jobIndex)
         {
-            if (!enableDemandSystem)
-                return;
-            
-            /*if (!parkingTargetLookup.HasComponent(entity))
-                m_CommandBuffer.AddComponent<ParkingTarget>(jobIndex, entity);
+            if (enableDemandSystem)
+                m_CommandBuffer.AddComponent<CarQueued>(jobIndex, entity);
+        }
 
-            m_CommandBuffer.SetComponent(jobIndex, entity, new ParkingTarget(pathElement.m_Target));*/
-            m_CommandBuffer.AddComponent<CarQueued>(jobIndex, pathElement.m_Target);
+        private void AddCarParkedComponent(Entity entity, int jobIndex)
+        {
+            if (enableDemandSystem)
+                m_CommandBuffer.AddComponent<CarParked>(jobIndex, entity);
         }
 
         // return vanilla limit of 4000 if disabled
@@ -437,7 +437,7 @@ namespace RealisticParking
             int i = VehicleUtils.SetParkingCurvePos(entity, ref random, currentLane, pathOwner, path, ref m_ParkedCarData, ref m_UnspawnedData, ref m_CurveData, ref m_ParkingLaneData, ref m_ConnectionLaneData, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, ref m_PrefabParkingLaneData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false);
             if (i != path.Length)
             {
-                SetCustomParkingComponents(entity, jobIndex, path[i]);
+                AddCarQueuedComponent(path[i].m_Target, jobIndex);
             }
         }
 
@@ -696,11 +696,13 @@ namespace RealisticParking
             else if (m_ParkingLaneData.HasComponent(currentLane.m_Lane) && currentLane.m_ChangeLane == Entity.Null)
             {
                 m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, currentLane.m_Lane);
+                AddCarParkedComponent(currentLane.m_Lane, jobIndex);
             }
             else if (m_GarageLaneData.HasComponent(currentLane.m_Lane))
             {
                 m_CommandBuffer.AddComponent<PathfindUpdated>(jobIndex, currentLane.m_Lane);
                 m_CommandBuffer.AddComponent(jobIndex, entity, new FixParkingLocation(currentLane.m_ChangeLane, entity));
+                AddCarParkedComponent(currentLane.m_Lane, jobIndex);
             }
             else
             {
@@ -841,11 +843,6 @@ namespace RealisticParking
                 personalCar.m_State &= ~PersonalCarFlags.HomeTarget;
             }
             VehicleUtils.SetupPathfind(item: new SetupQueueItem(entity, parameters, origin, destination), currentLane: ref currentLane, pathOwner: ref pathOwner, queue: m_PathfindQueue);
-        }
-
-        void IJobChunk.Execute(in ArchetypeChunk chunk, int unfilteredChunkIndex, bool useEnabledMask, in v128 chunkEnabledMask)
-        {
-            Execute(in chunk, unfilteredChunkIndex, useEnabledMask, in chunkEnabledMask);
         }
     }
 }

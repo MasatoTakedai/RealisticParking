@@ -12,19 +12,22 @@ using Unity.Collections;
 using Unity.Jobs;
 using Game.Simulation;
 using Unity.Burst;
+using Unity.Mathematics;
 
 namespace RealisticParking
 {
     [BurstCompile]
     public struct UpdateParkingDemandJob : IJobChunk
     {
+        private const int COOLDOWN_LENGTH = 1000;
+        private const float COOLDOWN_FACTOR = 0.1f;
         public EntityCommandBuffer.ParallelWriter commandBuffer;
         [ReadOnly] public EntityTypeHandle entityType;
         [ReadOnly] public ComponentLookup<CarQueued> carQueuedLookup;
+        [ReadOnly] public ComponentLookup<CarParked> carParkedLookup;
         [ReadOnly] public ComponentLookup<ParkingDemand> parkingDemand;
-        [ReadOnly] public uint frameIndex;
+        [ReadOnly] public uint currentFrameIndex;
         [ReadOnly] public bool enableDemandSystem;
-        [ReadOnly] public uint cooldownLength;
         [ReadOnly] public int demandTolerance;
         [ReadOnly] public float demandSizePerSpot;
 
@@ -41,48 +44,56 @@ namespace RealisticParking
                     if (parkingDemand.HasComponent(entity))
                     {
                         commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
-                        commandBuffer.RemoveComponent<GarageCount>(unfilteredChunkIndex, entity);
                         commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
                     }
                     if (carQueuedLookup.HasComponent(entity))
                         commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
+                    if (carParkedLookup.HasComponent(entity))
+                        commandBuffer.RemoveComponent<CarParked>(unfilteredChunkIndex, entity);
 
                     continue;
                 }
 
-                // if a new car is queued add to parking demand data and add flag to update pathfinding if needed
+                // initialize parking demand component and variables
+                ParkingDemand oldDemand = new ParkingDemand(0, currentFrameIndex);
+                if (parkingDemand.HasComponent(entity))
+                    oldDemand = parkingDemand[entity];
+                short newDemandVal = oldDemand.demand;
+                bool resetCooldown = false;
+
+                // increment and decrement demand based on what tag components are present
                 if (carQueuedLookup.HasComponent(entity))
                 {
-                    if (parkingDemand.TryGetComponent(entity, out ParkingDemand oldDemand))
-                    {
-                        short newDemand = (short)(oldDemand.demand + 1);
-                        commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemand, frameIndex));
-
-                        if (newDemand > demandTolerance && (oldDemand.demand - demandTolerance) % demandSizePerSpot >= (newDemand - demandTolerance) % demandSizePerSpot)
-                        {
-                            commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
-                        }
-                    }
-                    else
-                    {
-                        commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
-                        commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(1, frameIndex));
-
-                        if (demandTolerance == 0 && demandSizePerSpot == 1)
-                        {
-                            commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
-                        }
-                    }
-
+                    newDemandVal++;
                     commandBuffer.RemoveComponent<CarQueued>(unfilteredChunkIndex, entity);
-
+                    resetCooldown = true;
                 }
-                // remove demand and garage count component if cooldown reached
-                else if (parkingDemand.TryGetComponent(entity, out ParkingDemand demandData) && frameIndex >= demandData.cooldownStartFrame + cooldownLength)
+                if (carParkedLookup.HasComponent(entity))
                 {
-                    commandBuffer.RemoveComponent<ParkingDemand>(unfilteredChunkIndex, entity);
-                    commandBuffer.RemoveComponent<GarageCount>(unfilteredChunkIndex, entity);
-                    commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
+                    newDemandVal--;
+                    commandBuffer.RemoveComponent<CarParked>(unfilteredChunkIndex, entity);
+                }
+
+                // decrease demand if cooldown reached
+                if (oldDemand.demand != 0 && currentFrameIndex >= oldDemand.cooldownStartFrame + COOLDOWN_LENGTH)
+                {
+                    newDemandVal -= (short)(newDemandVal * COOLDOWN_FACTOR);
+                    newDemandVal--;
+                    resetCooldown = true;
+                }
+                newDemandVal = (short)math.max(0, newDemandVal);
+
+                // update demand component and set PathfindUpdated flag
+                if (newDemandVal != oldDemand.demand)
+                {
+                    if (!parkingDemand.HasComponent(entity))
+                        commandBuffer.AddComponent<ParkingDemand>(unfilteredChunkIndex, entity);
+                    commandBuffer.SetComponent(unfilteredChunkIndex, entity, new ParkingDemand(newDemandVal, resetCooldown ? currentFrameIndex : oldDemand.cooldownStartFrame));
+
+                    if (math.ceil((oldDemand.demand - demandTolerance) / demandSizePerSpot) != math.ceil((newDemandVal - demandTolerance) / demandSizePerSpot))
+                    {
+                        commandBuffer.AddComponent<PathfindUpdated>(unfilteredChunkIndex, entity);
+                    }
                 }
             }
         }
@@ -90,10 +101,9 @@ namespace RealisticParking
 
     public partial class ParkingDemandSystem : GameSystemBase
     {
-        private ModificationBarrier1 modificationBarrier1;
+        private ModificationBarrier5 barrier;
         private SimulationSystem simulationSystem;
         private bool enableDemandSystem;
-        private uint cooldownLength;
         private int demandTolerance;
         private float demandSizePerSpot;
         EntityQuery updatedParkingQuery;
@@ -101,8 +111,8 @@ namespace RealisticParking
         protected override void OnCreate()
         {
             base.OnCreate();
-            modificationBarrier1 = World.GetExistingSystemManaged<ModificationBarrier1>();
-            simulationSystem = World.GetExistingSystemManaged<SimulationSystem>();
+            barrier = World.GetOrCreateSystemManaged<ModificationBarrier5>();
+            simulationSystem = World.GetOrCreateSystemManaged<SimulationSystem>();
 
             Mod.INSTANCE.settings.onSettingsApplied += settings =>
             {
@@ -115,29 +125,16 @@ namespace RealisticParking
 
             updatedParkingQuery = GetEntityQuery(new EntityQueryDesc
             {
-                All = new ComponentType[1] { ComponentType.ReadOnly<Game.Net.ParkingLane>(), },
-                Any = new ComponentType[2]
+                Any = new ComponentType[3]
                 {
-                ComponentType.ReadOnly<CarQueued>(),
-                ComponentType.ReadOnly<ParkingDemand>()
+                    ComponentType.ReadOnly<CarQueued>(),
+                    ComponentType.ReadOnly<CarParked>(),
+                    ComponentType.ReadOnly<ParkingDemand>(),
                 },
                 None = new ComponentType[2]
                 {
-                ComponentType.ReadOnly<Deleted>(),
-                ComponentType.ReadOnly<Temp>()
-                }
-            }, new EntityQueryDesc
-            {
-                All = new ComponentType[1] { ComponentType.ReadOnly<GarageLane>() },
-                Any = new ComponentType[2]
-                {
-                ComponentType.ReadOnly<CarQueued>(),
-                ComponentType.ReadOnly<ParkingDemand>()
-                },
-                None = new ComponentType[2]
-                {
-                ComponentType.ReadOnly<Deleted>(),
-                ComponentType.ReadOnly<Temp>()
+                    ComponentType.ReadOnly<Deleted>(),
+                    ComponentType.ReadOnly<Temp>()
                 }
             });
 
@@ -150,21 +147,20 @@ namespace RealisticParking
             parkingDemandJob.entityType = SystemAPI.GetEntityTypeHandle();
             parkingDemandJob.parkingDemand = SystemAPI.GetComponentLookup<ParkingDemand>(isReadOnly: true);
             parkingDemandJob.carQueuedLookup = SystemAPI.GetComponentLookup<CarQueued>(isReadOnly: true);
-            parkingDemandJob.commandBuffer = modificationBarrier1.CreateCommandBuffer().AsParallelWriter();
-            parkingDemandJob.frameIndex = simulationSystem.frameIndex;
+            parkingDemandJob.carParkedLookup = SystemAPI.GetComponentLookup<CarParked>(isReadOnly: true);
+            parkingDemandJob.commandBuffer = barrier.CreateCommandBuffer().AsParallelWriter();
+            parkingDemandJob.currentFrameIndex = simulationSystem.frameIndex;
             parkingDemandJob.enableDemandSystem = this.enableDemandSystem;
-            parkingDemandJob.cooldownLength = this.cooldownLength;
             parkingDemandJob.demandTolerance = this.demandTolerance;
             parkingDemandJob.demandSizePerSpot = this.demandSizePerSpot;
             JobHandle jobHandle = JobChunkExtensions.ScheduleParallel(parkingDemandJob, updatedParkingQuery, base.Dependency);
             base.Dependency = jobHandle;
-            modificationBarrier1.AddJobHandleForProducer(jobHandle);
+            barrier.AddJobHandleForProducer(jobHandle);
         }
 
         private void UpdateSettings(Setting settings)
         {
             this.enableDemandSystem = settings.EnableInducedDemand;
-            this.cooldownLength = (uint)settings.InducedDemandCooldown;
             this.demandTolerance = settings.InducedDemandInitialTolerance;
             this.demandSizePerSpot = settings.InducedDemandQueueSizePerSpot;
         }

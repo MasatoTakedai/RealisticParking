@@ -34,7 +34,7 @@ namespace RealisticParking
             updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewParkingLaneDataSystem, ParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
-            updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.GameSimulation);
+            updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification5);
             updateSystem.UpdateAt<GarageLanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
 
             var harmony = new Harmony("daancingbanana.realisticparking");

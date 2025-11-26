@@ -26,7 +26,6 @@ namespace RealisticParking
         private ModificationEndBarrier modificationEndBarrier;
         private Game.Objects.SearchSystem m_ObjectSearchSystem;
         private ParkingLaneDataSystem parkingLaneDataSystem;
-        private SimulationSystem simulationSystem;
         private CitySystem m_CitySystem;
         private EntityQuery updatedParkingQuery;
         private EntityQuery garageQuery;
@@ -40,8 +39,7 @@ namespace RealisticParking
         protected override void OnCreate()
         {
             base.OnCreate();
-            modificationEndBarrier = World.GetExistingSystemManaged<ModificationEndBarrier>();
-            simulationSystem = World.GetExistingSystemManaged<SimulationSystem>();
+            modificationEndBarrier = World.GetOrCreateSystemManaged<ModificationEndBarrier>();
             m_ObjectSearchSystem = base.World.GetOrCreateSystemManaged<Game.Objects.SearchSystem>();
             m_CitySystem = base.World.GetOrCreateSystemManaged<CitySystem>();
             parkingLaneDataSystem = base.World.GetOrCreateSystemManaged<ParkingLaneDataSystem>();

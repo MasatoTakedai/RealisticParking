@@ -39,11 +39,6 @@ namespace RealisticParking
         [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
         public float InducedDemandQueueSizePerSpot { get; set; }
 
-        [SettingsUISlider(min = 3000, max = 10000, step = 1)]
-        [SettingsUISection(MainTab, InducedDemandGroup)]
-        [SettingsUIDisableByCondition(typeof(Setting), nameof(hideInducedDemand))]
-        public int InducedDemandCooldown { get; set; }
-
 
         [SettingsUISection(MainTab, RerouteDistanceGroup)]
         public bool EnableRerouteDistance { get; set; }
@@ -78,7 +73,6 @@ namespace RealisticParking
         public override void SetDefaults()
         {
             EnableInducedDemand = true;
-            InducedDemandCooldown = 6000;
             InducedDemandInitialTolerance = 2;
             InducedDemandQueueSizePerSpot = 1.5f;
             EnableRerouteDistance = true;
@@ -118,11 +112,6 @@ namespace RealisticParking
                 { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), "Demand Queue Size per Parking Spot" },
                 { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandQueueSizePerSpot)), 
                     "The number of cars or bikes to be allowed to pathfind to each available parking spot. See decription for setting above for more details." 
-                },
-                { m_Setting.GetOptionLabelLocaleID(nameof(Setting.InducedDemandCooldown)), "Demand Reset Length" },
-                { m_Setting.GetOptionDescLocaleID(nameof(Setting.InducedDemandCooldown)), 
-                    "The number of simulation frames after the most recent pathfind for the demand to reset to 0. For reference, one in-game minute is approximately equal to " +
-                    "182 frames." 
                 },
 
                 { m_Setting.GetOptionGroupLocaleID(Setting.RerouteDistanceGroup), "Reroute Distance" },
