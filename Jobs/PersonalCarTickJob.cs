@@ -256,6 +256,10 @@ namespace RealisticParking
             {
                 ResetPath(entity, jobIndex, isBicycle, ref random, ref personalCar, ref car, ref currentLane, ref pathOwner);
             }
+            if (isBicycle && currentLane.m_Lane != Entity.Null && (pathOwner.m_State & (PathFlags.Pending | PathFlags.Obsolete)) == 0 && m_PedestrianLaneData.TryGetComponent(currentLane.m_Lane, out var componentData) && componentData.m_AccessRestriction != Entity.Null && (componentData.m_Flags & (PedestrianLaneFlags.AllowEnter | PedestrianLaneFlags.AllowExit)) == 0)
+            {
+                pathOwner.m_State |= PathFlags.Failed;
+            }
             if (((personalCar.m_State & (PersonalCarFlags.Transporting | PersonalCarFlags.Boarding | PersonalCarFlags.Disembarking)) == 0 && !m_EntityLookup.Exists(target.m_Target)) || VehicleUtils.PathfindFailed(pathOwner))
             {
                 RemovePath(entity, ref pathOwner);
