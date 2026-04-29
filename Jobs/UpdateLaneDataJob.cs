@@ -49,7 +49,7 @@ namespace RealisticParking
                 // calculate number of spots free with diff alg for parking lots and roadside parking
                 int spotsFree = 0;
                 if (parkingLaneData.m_SlotInterval != 0)
-                    spotsFree = NetUtils.GetParkingSlotCount(curve, parkingLane, parkingLaneData);
+                    spotsFree = NetUtils.GetParkingSlotCount(curve, parkingLane, parkingLaneData) - laneObjects.Length;
                 else
                     spotsFree = (int)math.ceil(freeSpace / CAR_LENGTH);
 
