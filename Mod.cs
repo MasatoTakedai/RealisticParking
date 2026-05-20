@@ -27,8 +27,9 @@ namespace RealisticParking
             settings = new Setting(this);
             settings.RegisterInOptionsUI();
             GameManager.instance.localizationManager.AddSource("en-US", new LocaleEN(settings));
-
             AssetDatabase.global.LoadSettings(nameof(RealisticParking), settings, new Setting(this));
+            settings.VerifyPreset();
+
             updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
