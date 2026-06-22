@@ -791,17 +791,9 @@ namespace RealisticParking
                         Household household2 = m_HouseholdData[household];
                         parameters.m_Weights = CitizenUtils.GetPathfindWeights(citizen, household2, m_HouseholdCitizens[household].Length);
                     }
-                    if (m_TravelPurposeData.TryGetComponent(resident.m_Citizen, out var componentData3))
+                    if (m_TravelPurposeData.TryGetComponent(resident.m_Citizen, out var componentData3) && componentData3.m_Purpose == Purpose.EmergencyShelter)
                     {
-                        switch (componentData3.m_Purpose)
-                        {
-                            case Purpose.EmergencyShelter:
-                                parameters.m_Weights = new PathfindWeights(1f, 0.2f, 0f, 0.1f);
-                                break;
-                            case Purpose.MovingAway:
-                                parameters.m_MaxCost = CitizenBehaviorSystem.kMaxMovingAwayCost;
-                                break;
-                        }
+                        parameters.m_Weights = new PathfindWeights(1f, 0.2f, 0f, 0.1f);
                     }
                     if (m_DivertData.TryGetComponent(entity2, out var componentData4))
                     {
