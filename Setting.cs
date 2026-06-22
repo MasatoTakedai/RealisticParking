@@ -123,7 +123,7 @@ namespace RealisticParking
             InducedDemandPreset = "Medium";
 
             EnableRerouteDistance = true;
-            RerouteDistance = 5;
+            RerouteDistance = 12;
 
             EnableParkingMins = true;
             GarageSpotsPerResProp = 1.2f;
