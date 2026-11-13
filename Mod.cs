@@ -34,7 +34,8 @@ namespace RealisticParking
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.GameSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem, PersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
             updateSystem.UpdateAfter<NewPersonalCarAISystem.Actions, NewPersonalCarAISystem>(SystemUpdatePhase.LoadSimulation);
-            updateSystem.UpdateAfter<NewParkingLaneDataSystem, ParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
+            // take vanilla's slot so other mods' UpdateAfter<_, ParkingLaneDataSystem> systems (e.g. Placemaker) still run after us
+            updateSystem.UpdateBefore<NewParkingLaneDataSystem, ParkingLaneDataSystem>(SystemUpdatePhase.ModificationEnd);
             updateSystem.UpdateAt<ParkingDemandSystem>(SystemUpdatePhase.Modification5);
             updateSystem.UpdateAt<GarageLanesModifiedSystem>(SystemUpdatePhase.ModificationEnd);
 
