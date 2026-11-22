@@ -44,7 +44,7 @@ namespace RealisticParking
                 m_CommandBuffer.AddComponent<CarParked>(jobIndex, entity);
         }
 
-        // return vanilla limit of 4000 if disabled
+        // Use the vanilla limit of 40000 when the setting is disabled.
         private int GetRerouteLimit() 
         {
             if (enableRerouteLimit)
@@ -251,6 +251,14 @@ namespace RealisticParking
 
         private void Tick(int jobIndex, Entity entity, PrefabRef prefabRef, DynamicBuffer<LayoutElement> layout, DynamicBuffer<CarNavigationLane> navigationLanes, bool isBicycle, ref Game.Vehicles.PersonalCar personalCar, ref Car car, ref CarCurrentLane currentLane, ref PathOwner pathOwner, ref Target target)
         {
+            // Parking helpers can write to the path at m_ElementIndex.
+            if (pathOwner.m_ElementIndex < 0)
+            {
+                RemovePath(entity, ref pathOwner);
+                pathOwner.m_State &= ~PathFlags.Updated;
+                pathOwner.m_State |= PathFlags.Obsolete;
+            }
+
             Random random = m_RandomSeed.GetRandom(entity.Index);
             if (VehicleUtils.ResetUpdatedPath(ref pathOwner))
             {
@@ -380,7 +388,7 @@ namespace RealisticParking
             {
                 return;
             }
-            int num2 = random.NextInt(num) * (random.NextInt(num) + 1) / num;
+            int num2 = (int)((long)random.NextInt(num) * (random.NextInt(num) + 1) / num);
             PathElement pathElement = path[pathOwner.m_ElementIndex + num2];
             if (m_ParkingLaneData.HasComponent(pathElement.m_Target))
             {
@@ -439,7 +447,7 @@ namespace RealisticParking
             PathUtils.ResetPath(ref currentLane, path, m_SlaveLaneData, m_OwnerData, m_SubLanes);
             VehicleUtils.ResetParkingLaneStatus(entity, isBicycle, ref currentLane, ref pathOwner, path, ref m_EntityLookup, ref m_CurveData, ref m_ParkingLaneData, ref m_CarLaneData, ref m_PedestrianLaneData, ref m_ConnectionLaneData, ref m_SpawnLocationData, ref m_PrefabRefData, ref m_PrefabSpawnLocationData);
             int i = VehicleUtils.SetParkingCurvePos(entity, ref random, currentLane, pathOwner, path, ref m_ParkedCarData, ref m_UnspawnedData, ref m_CurveData, ref m_ParkingLaneData, ref m_ConnectionLaneData, ref m_PrefabRefData, ref m_PrefabObjectGeometryData, ref m_PrefabParkingLaneData, ref m_LaneObjects, ref m_LaneOverlaps, ignoreDriveways: false);
-            if (i != path.Length)
+            if ((uint)i < (uint)path.Length)
             {
                 AddCarQueuedComponent(path[i].m_Target, jobIndex);
             }
@@ -559,17 +567,28 @@ namespace RealisticParking
                 personalCar.m_State &= ~PersonalCarFlags.Boarding;
                 return true;
             }
+            bool hasLeaderTarget = m_TargetData.TryGetComponent(leader, out var leaderTarget);
             DynamicBuffer<PathElement> targetElements = m_PathElements[vehicleEntity];
-            DynamicBuffer<PathElement> sourceElements = m_PathElements[leader];
-            PathOwner sourceOwner = m_PathOwnerData[leader];
-            Target target2 = m_TargetData[leader];
-            PathUtils.CopyPath(sourceElements, sourceOwner, 0, targetElements);
+            if (hasLeaderTarget && m_PathOwnerData.TryGetComponent(leader, out var sourceOwner)
+                && m_PathElements.TryGetBuffer(leader, out var sourceElements)
+                && sourceOwner.m_ElementIndex >= 0 && sourceOwner.m_ElementIndex <= sourceElements.Length)
+            {
+                PathUtils.CopyPath(sourceElements, sourceOwner, 0, targetElements);
+                pathOwner.m_State |= PathFlags.Updated;
+            }
+            else
+            {
+                targetElements.Clear();
+                pathOwner.m_State &= ~(PathFlags.Updated | PathFlags.Failed | PathFlags.Stuck);
+                // Request a new route if the destination is available, otherwise let passengers disembark.
+                pathOwner.m_State |= hasLeaderTarget && m_EntityLookup.Exists(leaderTarget.m_Target)
+                    ? PathFlags.Obsolete : PathFlags.Failed;
+            }
             pathOwner.m_ElementIndex = 0;
-            pathOwner.m_State |= PathFlags.Updated;
             personalCar.m_State &= ~PersonalCarFlags.Boarding;
             personalCar.m_State |= PersonalCarFlags.Transporting;
             bool flag = false;
-            target.m_Target = target2.m_Target;
+            target.m_Target = hasLeaderTarget ? leaderTarget.m_Target : Entity.Null;
             if (m_ResidentData.TryGetComponent(leader, out var componentData) && m_HouseholdMemberData.TryGetComponent(componentData.m_Citizen, out var componentData2) && m_PropertyRenterData.TryGetComponent(componentData2.m_Household, out var componentData3))
             {
                 flag |= componentData3.m_Property == target.m_Target;

@@ -126,7 +126,21 @@ namespace RealisticParking
             m_TimeSystem = base.World.GetOrCreateSystemManaged<TimeSystem>();
             m_ServiceFeeSystem = base.World.GetOrCreateSystemManaged<ServiceFeeSystem>();
             m_Actions = base.World.GetOrCreateSystemManaged<Actions>();
-            m_VehicleQuery = GetEntityQuery(ComponentType.ReadWrite<Game.Vehicles.PersonalCar>(), ComponentType.ReadOnly<CarCurrentLane>(), ComponentType.ReadOnly<UpdateFrame>(), ComponentType.Exclude<Deleted>(), ComponentType.Exclude<Temp>(), ComponentType.Exclude<TripSource>(), ComponentType.Exclude<OutOfControl>(), ComponentType.Exclude<Destroyed>());
+            m_VehicleQuery = GetEntityQuery(
+                ComponentType.ReadWrite<Game.Vehicles.PersonalCar>(),
+                ComponentType.ReadWrite<Car>(),
+                ComponentType.ReadWrite<CarCurrentLane>(),
+                ComponentType.ReadWrite<CarNavigationLane>(),
+                ComponentType.ReadWrite<Target>(),
+                ComponentType.ReadWrite<PathOwner>(),
+                ComponentType.ReadWrite<PathElement>(),
+                ComponentType.ReadOnly<PrefabRef>(),
+                ComponentType.ReadOnly<UpdateFrame>(),
+                ComponentType.Exclude<Deleted>(),
+                ComponentType.Exclude<Temp>(),
+                ComponentType.Exclude<TripSource>(),
+                ComponentType.Exclude<OutOfControl>(),
+                ComponentType.Exclude<Destroyed>());
             m_MovingToParkedCarRemoveTypes = new ComponentTypeSet(new ComponentType[11]
             {
             ComponentType.ReadWrite<Moving>(),
@@ -196,8 +210,8 @@ namespace RealisticParking
                 m_LaneOverlaps = SystemAPI.GetBufferLookup<LaneOverlap>(isReadOnly: true),
                 m_SubLanes = SystemAPI.GetBufferLookup<Game.Net.SubLane>(isReadOnly: true),
                 m_HouseholdCitizens = SystemAPI.GetBufferLookup<HouseholdCitizen>(isReadOnly: true),
-                m_TargetData = SystemAPI.GetComponentLookup<Target>(isReadOnly: true),
-                m_PathOwnerData = SystemAPI.GetComponentLookup<PathOwner>(isReadOnly: true),
+                m_TargetData = SystemAPI.GetComponentLookup<Target>(isReadOnly: false),
+                m_PathOwnerData = SystemAPI.GetComponentLookup<PathOwner>(isReadOnly: false),
                 m_PathElements = SystemAPI.GetBufferLookup<PathElement>(isReadOnly: false),
                 m_RandomSeed = RandomSeed.Next(),
                 m_City = m_CitySystem.City,
